@@ -1,0 +1,32 @@
+{
+  "name": "@upchaar/patient",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start -p 3000",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf .next .turbo node_modules"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.66.0",
+    "@upchaar/types": "workspace:*",
+    "@upchaar/ui": "workspace:*",
+    "lucide-react": "^1.31.0",
+    "next": "^15.1.6",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^22.10.5",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@upchaar/typescript-config": "workspace:*",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.7.3"
+  }
+}

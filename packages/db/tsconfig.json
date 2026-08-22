@@ -1,0 +1,8 @@
+{
+  "extends": "@upchaar/typescript-config/base.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "noEmit": true
+  },
+  "include": ["src/**/*.ts", "prisma/**/*.ts"]
+}

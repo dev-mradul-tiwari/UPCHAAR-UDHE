@@ -1,0 +1,131 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: upchaar-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-upchaar}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-upchaar_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-upchaar}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-upchaar} -d ${POSTGRES_DB:-upchaar}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # One-shot: syncs the Prisma schema and seeds demo data, then exits.
+  # Uses the api image's `build` stage because that layer still has devDeps
+  # (prisma CLI + tsx), which the runtime layer prunes away.
+  migrate:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: build
+    container_name: upchaar-migrate
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-upchaar}:${POSTGRES_PASSWORD:-upchaar_dev_password}@postgres:5432/${POSTGRES_DB:-upchaar}?schema=public
+    working_dir: /app/packages/db
+    command: >
+      sh -c "pnpm exec prisma db push --skip-generate &&
+             pnpm exec tsx prisma/seed.ts"
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: upchaar-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-upchaar}:${POSTGRES_PASSWORD:-upchaar_dev_password}@postgres:5432/${POSTGRES_DB:-upchaar}?schema=public
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production-please-use-a-long-random-string}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-AQ.Ab8RN6LpCM8DizAEFaIYDMytvBBqiZ3Z-gJGVQFGugaZ72_LVQ}
+      # gemini-1.5-flash was retired by Google; this key's account only has
+      # access to the 2.x/3.x model families. gemini-2.5-flash is the closest
+      # match to the app's original fast/cheap-tier choice.
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
+      CORS_ORIGINS: http://localhost:3000,http://localhost:3001,http://localhost:3002
+    ports:
+      - "4000:4000"
+    healthcheck:
+      test:
+        ["CMD", "node", "-e", "fetch('http://localhost:4000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  patient:
+    build:
+      context: .
+      dockerfile: apps/patient/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:4000/api/v1
+    container_name: upchaar-patient
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      API_URL: http://api:4000/api/v1
+      NEXT_PUBLIC_API_URL: http://localhost:4000/api/v1
+    ports:
+      - "3000:3000"
+
+  doctor:
+    build:
+      context: .
+      dockerfile: apps/doctor/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:4000/api/v1
+    container_name: upchaar-doctor
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      API_URL: http://api:4000/api/v1
+      NEXT_PUBLIC_API_URL: http://localhost:4000/api/v1
+    ports:
+      - "3001:3001"
+
+  hospital:
+    build:
+      context: .
+      dockerfile: apps/hospital/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:4000/api/v1
+    container_name: upchaar-hospital
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3002
+      API_URL: http://api:4000/api/v1
+      NEXT_PUBLIC_API_URL: http://localhost:4000/api/v1
+    ports:
+      - "3002:3002"
+
+volumes:
+  pgdata:

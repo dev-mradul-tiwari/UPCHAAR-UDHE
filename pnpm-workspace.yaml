@@ -1,0 +1,13 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+
+# pnpm 11 gates postinstall scripts. Prisma must run its script to emit the
+# generated client; esbuild/sharp need theirs to fetch platform binaries.
+allowBuilds:
+  "@prisma/client": true
+  "@prisma/engines": true
+  prisma: true
+  esbuild: true
+  sharp: true
+  unrs-resolver: true

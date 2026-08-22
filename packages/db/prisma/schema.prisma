@@ -1,0 +1,235 @@
+// Upchaar data model.
+// Field names here are mirrored exactly by packages/types — see docs/API_CONTRACT.md.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  PATIENT
+  DOCTOR
+  HOSPITAL
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum BedType {
+  ICU
+  GENERAL
+  PREMIUM
+}
+
+model Patient {
+  id           String    @id @default(cuid())
+  name         String
+  email        String    @unique
+  passwordHash String
+  phone        String
+  dateOfBirth  DateTime
+  gender       Gender
+  bloodGroup   String?
+
+  medicalHistory MedicalHistory?
+  appointments   Appointment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+}
+
+model MedicalHistory {
+  id        String  @id @default(cuid())
+  patientId String  @unique
+  patient   Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  chronicDiseases    String[] @default([])
+  allergies          String[] @default([])
+  pastSurgeries      String[] @default([])
+  currentMedications String[] @default([])
+  smoking            Boolean  @default(false)
+  alcohol            Boolean  @default(false)
+  notes              String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Hospital {
+  id           String @id @default(cuid())
+  name         String
+  email        String @unique
+  passwordHash String
+  phone        String
+
+  type               String // e.g. "Multi-speciality", "Clinic"
+  registrationNumber String @unique
+
+  addressLine String
+  city        String
+  state       String
+  zipcode     String
+
+  rating Float @default(4.0)
+
+  departments  Department[]
+  doctors      Doctor[]
+  appointments Appointment[]
+  beds         BedInventory[]
+  medicines    MedicineInventory[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([city])
+  @@index([email])
+}
+
+model Department {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+
+  hospitalId String
+  hospital   Hospital @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+
+  // Head doctor is a plain optional pointer; the doctor's own membership is
+  // expressed by Doctor.departmentId. Two distinct relations, explicitly named.
+  headDoctorId String? @unique
+  headDoctor   Doctor? @relation("DepartmentHead", fields: [headDoctorId], references: [id], onDelete: SetNull)
+
+  avgConsultMinutes Int @default(15)
+
+  doctors      Doctor[]      @relation("DepartmentMembers")
+  appointments Appointment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([hospitalId, name])
+  @@index([hospitalId])
+}
+
+model Doctor {
+  id           String @id @default(cuid())
+  name         String
+  email        String @unique
+  passwordHash String
+  phone        String
+
+  specialization  String
+  experienceYears Int    @default(0)
+
+  hospitalId String
+  hospital   Hospital @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+
+  departmentId String?
+  department   Department? @relation("DepartmentMembers", fields: [departmentId], references: [id], onDelete: SetNull)
+
+  headedDepartment Department? @relation("DepartmentHead")
+
+  isAvailable        Boolean @default(true)
+  mustChangePassword Boolean @default(true)
+
+  appointments Appointment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([hospitalId])
+  @@index([departmentId])
+  @@index([email])
+}
+
+model Appointment {
+  id     String            @id @default(cuid())
+  reason String
+  status AppointmentStatus @default(PENDING)
+
+  scheduledFor DateTime
+  // Calendar day (UTC midnight) of scheduledFor. Denormalised so the
+  // (hospital, department, day) queue can be indexed and locked cheaply.
+  scheduledDay DateTime
+
+  // Monotonic per (hospitalId, departmentId, scheduledDay). Allocated in a
+  // transaction at booking time. See docs/ARCHITECTURE.md → Queue design.
+  queueNumber Int
+
+  patientId String
+  patient   Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  hospitalId String
+  hospital   Hospital @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+
+  departmentId String
+  department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+
+  doctorId String?
+  doctor   Doctor? @relation(fields: [doctorId], references: [id], onDelete: SetNull)
+
+  startedAt   DateTime?
+  completedAt DateTime?
+  notes       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([hospitalId, departmentId, scheduledFor, queueNumber])
+  @@index([patientId])
+  @@index([hospitalId, status])
+  @@index([departmentId, scheduledDay, status])
+  @@index([doctorId, scheduledDay])
+}
+
+model BedInventory {
+  id String @id @default(cuid())
+
+  hospitalId String
+  hospital   Hospital @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+
+  type      BedType
+  total     Int     @default(0)
+  available Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([hospitalId, type])
+  @@index([hospitalId])
+}
+
+model MedicineInventory {
+  id String @id @default(cuid())
+
+  hospitalId String
+  hospital   Hospital @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+
+  name       String
+  quantity   Int
+  threshold  Int      @default(10)
+  unit       String   @default("tablets")
+  expiryDate DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([hospitalId])
+  @@index([hospitalId, name])
+}
