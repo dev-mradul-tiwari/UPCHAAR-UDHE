@@ -48,7 +48,43 @@ export class SmsService {
       throw new Error(`Jio SIM Gateway error [${response.status}]: ${errorText}`);
     }
 
-    console.log(`[SMS - Jio SIM Primary SUCCESS] Sent to +91${phone}`);
+  /**
+   * Sends an SMS using Twilio REST API (Fallback / Alternative Provider).
+   */
+  private static async sendViaTwilio(phone: string, message: string): Promise<boolean> {
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const authToken = process.env.TWILIO_AUTH_TOKEN;
+    const fromPhone = process.env.TWILIO_PHONE_NUMBER;
+
+    if (!accountSid || !authToken || !fromPhone) {
+      throw new Error("Twilio credentials (TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER) missing.");
+    }
+
+    const auth = Buffer.from(`${accountSid}:${authToken}`).toString("base64");
+    const body = new URLSearchParams({
+      To: `+91${phone}`,
+      From: fromPhone,
+      Body: message,
+    });
+
+    const response = await fetch(
+      `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${auth}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: body.toString(),
+      },
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Twilio API error [${response.status}]: ${errorText}`);
+    }
+
+    console.log(`[SMS - Twilio SUCCESS] Sent to +91${phone}`);
     return true;
   }
 
@@ -63,7 +99,7 @@ export class SmsService {
   }
 
   /**
-   * Main dispatch method using Jio SIM Android Gateway as Primary Provider.
+   * Main dispatch method supporting Jio SIM Gateway, Twilio, Auto-Failover, and Console.
    */
   public static async sendSms({ phone, message }: SendSmsParams): Promise<void> {
     const cleanPhone = this.cleanPhoneNumber(phone);
@@ -74,11 +110,27 @@ export class SmsService {
       return;
     }
 
+    if (mode === "twilio") {
+      try {
+        await this.sendViaTwilio(cleanPhone, message);
+      } catch (err: any) {
+        console.warn(`[SMS FAILOVER] Twilio failed: ${err.message}. Falling back to Console Log.`);
+        this.logToConsole(cleanPhone, message);
+      }
+      return;
+    }
+
+    // Default primary provider: Jio SIM Gateway (with automatic failover to Twilio/Console)
     try {
       await this.sendViaJioGateway(cleanPhone, message);
-    } catch (err: any) {
-      console.warn(`[SMS FAILOVER] Jio SIM Gateway failed: ${err.message}. Falling back to Console Log.`);
-      this.logToConsole(cleanPhone, message);
+    } catch (jioErr: any) {
+      console.warn(`[SMS FAILOVER] Jio SIM Gateway failed: ${jioErr.message}. Trying Twilio / Console...`);
+      try {
+        await this.sendViaTwilio(cleanPhone, message);
+      } catch (twilioErr: any) {
+        console.warn(`[SMS FAILOVER] Twilio also failed. Logging to Console.`);
+        this.logToConsole(cleanPhone, message);
+      }
     }
   }
 
