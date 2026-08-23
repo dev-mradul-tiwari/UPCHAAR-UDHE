@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
 import {
   Activity,
   CalendarPlus,
@@ -9,6 +10,8 @@ import {
   MessageCircleHeart,
   Pill,
   ShieldAlert,
+  Share2,
+  CheckCircle2,
 } from "lucide-react";
 import type { Appointment } from "@upchaar/types";
 import { Alert, AlertDescription, AlertTitle } from "@upchaar/ui/alert";
@@ -19,10 +22,12 @@ import { PageHeader } from "@upchaar/ui/page-header";
 import { Skeleton } from "@upchaar/ui/skeleton";
 import { StatCard } from "@upchaar/ui/stat-card";
 
+import { useLanguage } from "@upchaar/ui/language-provider";
+
 import { AppointmentCard } from "@/components/appointments/appointment-card";
 import { LiveQueueCard } from "@/components/queue/live-queue-card";
 import { usePatient } from "@/components/session-provider";
-import { errorMessage } from "@/lib/api";
+import { api, errorMessage } from "@/lib/api";
 import { formatAge, formatGender } from "@/lib/format";
 import { useMedicalRecord, useMyAppointments } from "@/lib/queries";
 
@@ -44,21 +49,30 @@ function nextAppointment(items: Appointment[]): Appointment | null {
   return upcoming[0] ?? null;
 }
 
-function greetingFor(date: Date): string {
+function greetingFor(date: Date, lang: string): string {
   const hour = date.getHours();
+  if (lang === "hi") {
+    if (hour < 12) return "शुभ प्रभात";
+    if (hour < 17) return "शुभ दोपहर";
+    return "शुभ संध्या";
+  }
   if (hour < 12) return "Good morning";
   if (hour < 17) return "Good afternoon";
   return "Good evening";
 }
 
 export function DashboardView() {
+  const { language, t } = useLanguage();
   const { data: patient } = usePatient();
   const appointments = useMyAppointments("ALL", 1, 20);
   const record = useMedicalRecord();
+  const myReferralsQuery = useQuery({
+    queryKey: ["my-referrals"],
+    queryFn: () => api.referrals.myReferrals(),
+  });
 
-  // Set on the client so the server-rendered markup never disagrees.
   const [greeting, setGreeting] = React.useState("Hello");
-  React.useEffect(() => setGreeting(greetingFor(new Date())), []);
+  React.useEffect(() => setGreeting(greetingFor(new Date(), language)), [language]);
 
   const items = appointments.data?.items ?? [];
   const next = React.useMemo(() => nextAppointment(items), [items]);
@@ -68,14 +82,14 @@ export function DashboardView() {
   return (
     <div className="grid gap-8">
       <PageHeader
-        eyebrow="Your care"
+        eyebrow={language === "hi" ? "आपकी देखभाल" : "Your care"}
         title={`${greeting}${firstName.length > 0 ? `, ${firstName}` : ""}`}
-        description="Here is what is happening with your care today."
+        description={language === "hi" ? "आज आपकी स्वास्थ्य देखभाल स्थिति।" : "Here is what is happening with your care today."}
         actions={
           <Button asChild>
             <Link href="/appointments/new">
               <CalendarPlus aria-hidden />
-              Book appointment
+              {t("book_appointment")}
             </Link>
           </Button>
         }
@@ -87,6 +101,99 @@ export function DashboardView() {
           <AlertTitle>We could not load your appointments</AlertTitle>
           <AlertDescription>{errorMessage(appointments.error)}</AlertDescription>
         </Alert>
+      ) : null}
+
+      {/* Referral Connection Notifications */}
+      {myReferralsQuery.data && myReferralsQuery.data.length > 0 ? (
+        <section className="space-y-4">
+          {myReferralsQuery.data.map((referral) => {
+            const isConnected = referral.status === "CONNECTED";
+            return (
+              <Card
+                key={referral.id}
+                className={`transition-all shadow-md ${
+                  isConnected
+                    ? "border-emerald-500/40 bg-gradient-to-r from-emerald-500/10 via-card to-card"
+                    : "border-amber-500/30 bg-gradient-to-r from-amber-500/10 via-card to-card"
+                }`}
+              >
+                <CardHeader className="pb-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`flex size-10 items-center justify-center rounded-xl shrink-0 ${
+                          isConnected ? "bg-emerald-500/20 text-emerald-500" : "bg-amber-500/20 text-amber-500"
+                        }`}
+                      >
+                        <Share2 className="size-5" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-base text-foreground">
+                          {isConnected ? "Specialist Connection Ready" : "Active Medical Referral"}
+                        </CardTitle>
+                        <CardDescription className="text-xs">
+                          Referred by <strong className="text-foreground">Dr. {referral.referringDoctorName}</strong> ({referral.referringHospitalName})
+                        </CardDescription>
+                      </div>
+                    </div>
+                    {isConnected ? (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-semibold text-emerald-500">
+                        <CheckCircle2 className="size-3.5" />
+                        Received & Connected
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 px-3 py-1 text-xs font-medium text-amber-500">
+                        Pending Specialist Acceptance
+                      </span>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="rounded-lg bg-card/80 p-3.5 border border-border/80 text-xs space-y-1.5">
+                    <p className="font-semibold text-foreground">
+                      {isConnected
+                        ? `${referral.connectedDoctorName ? `Dr. ${referral.connectedDoctorName}` : "A specialist"} at ${referral.connectedHospitalName ?? "the hospital"} accepted your referral:`
+                        : "Referral Reason & Clinical Details (Waiting for hospital/doctor connection):"}
+                    </p>
+                    <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                      "{referral.reason}"
+                    </p>
+                    {referral.targetSpecialization ? (
+                      <p className="text-2xs text-primary font-medium">
+                        Requested Specialization: {referral.targetSpecialization}
+                      </p>
+                    ) : null}
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                    <span className="text-2xs text-muted-foreground">
+                      Referred on: {new Date(referral.createdAt).toLocaleDateString("en-IN", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </span>
+
+                    {isConnected ? (
+                      <Button asChild size="sm" className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white">
+                        <Link
+                          href={`/appointments/new?hospitalId=${referral.connectedHospitalId ?? ""}&doctorId=${referral.connectedDoctorId ?? ""}&reason=${encodeURIComponent(referral.reason)}`}
+                        >
+                          <CalendarPlus className="size-4" />
+                          Book Appointment
+                        </Link>
+                      </Button>
+                    ) : (
+                      <span className="text-xs font-medium text-amber-500/90 italic">
+                        Booking will open when a doctor or hospital connects
+                      </span>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </section>
       ) : null}
 
       <section className="grid gap-4" aria-labelledby="next-visit-heading">

@@ -69,6 +69,7 @@ export type Doctor = {
   phone: string;
   specialization: string;
   experienceYears: number;
+  rating: number;
   isAvailable: boolean;
   mustChangePassword: boolean;
   hospitalId: string;
@@ -101,6 +102,7 @@ export const bookAppointmentSchema = z.object({
   scheduledFor: z.coerce.date().refine((d) => d.getTime() + 60 * 60 * 1000 > Date.now(), {
     message: "Pick a time slot that has not ended yet",
   }),
+  receiveSms: z.boolean().default(true),
 });
 export type BookAppointmentInput = z.infer<typeof bookAppointmentSchema>;
 
@@ -131,6 +133,7 @@ export type Appointment = {
   scheduledFor: string;
   queueNumber: number;
   notes: string | null;
+  receiveSms?: boolean;
   startedAt: string | null;
   completedAt: string | null;
   createdAt: string;
@@ -152,10 +155,12 @@ export type QueueStatus = {
   nowServing: number | null;
   departmentId: string;
   departmentName: string;
+  scheduledFor?: string;
 };
 
 export type QueueEntry = {
   appointmentId: string;
+  patientId: string;
   queueNumber: number;
   status: z.infer<typeof AppointmentStatusSchema>;
   patientName: string;
@@ -262,8 +267,11 @@ export type ConsultationNote = {
   doctorDepartment?: string | null;
   hospitalName: string;
   date: string;
-  notes: string;
+  notes?: string | null;
   reason: string;
+  status?: string;
+  scheduledFor?: string;
+  queueNumber?: number;
 };
 
 export type PatientRecord = {
@@ -278,4 +286,61 @@ export type PatientRecord = {
   };
   medicalHistory: MedicalHistory | null;
   consultations?: ConsultationNote[];
+};
+
+export const createReferralSchema = z.object({
+  patientId: z.string().min(1, "Patient ID is required"),
+  reason: z.string().min(3, "Reason for referral is required"),
+  targetSpecialization: z.string().optional().nullable(),
+});
+
+export type CreateReferralInput = z.infer<typeof createReferralSchema>;
+
+export type Referral = {
+  id: string;
+  patientId: string;
+  patientName: string;
+  patientEmail: string;
+  patientPhone: string;
+  patientAge?: number;
+  patientGender?: string;
+  referringDoctorId: string;
+  referringDoctorName: string;
+  referringDoctorSpecialization: string;
+  referringHospitalId: string;
+  referringHospitalName: string;
+  referringHospitalCity: string;
+  reason: string;
+  targetSpecialization?: string | null;
+  status: string;
+  connectedDoctorId?: string | null;
+  connectedDoctorName?: string | null;
+  connectedHospitalId?: string | null;
+  connectedHospitalName?: string | null;
+  createdAt: string;
+};
+
+/* ------------------------------------------------------------- feedback */
+
+export const createFeedbackSchema = z.object({
+  appointmentId: z.string().min(1, "Appointment ID is required"),
+  doctorRating: z.coerce.number().int().min(1).max(5),
+  hospitalRating: z.coerce.number().int().min(1).max(5),
+  comment: z.string().trim().max(500).optional().nullable(),
+});
+
+export type CreateFeedbackInput = z.infer<typeof createFeedbackSchema>;
+
+export type Feedback = {
+  id: string;
+  appointmentId: string;
+  patientId: string;
+  doctorId: string;
+  hospitalId: string;
+  doctorRating: number;
+  hospitalRating: number;
+  comment: string | null;
+  createdAt: string;
+  doctorName?: string;
+  hospitalName?: string;
 };

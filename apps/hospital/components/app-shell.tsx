@@ -11,6 +11,7 @@ import {
   Pill,
   Stethoscope,
   Building2,
+  Share2,
 } from "lucide-react";
 import { Button } from "@upchaar/ui/button";
 import {
@@ -31,6 +32,7 @@ import {
 } from "@upchaar/ui/sheet";
 import { Skeleton } from "@upchaar/ui/skeleton";
 import { ThemeToggle } from "@upchaar/ui/theme-toggle";
+import { LanguageToggle } from "@upchaar/ui/language-toggle";
 import { UserAvatar } from "@upchaar/ui/avatar";
 import { cn } from "@upchaar/ui/lib/utils";
 
@@ -69,6 +71,12 @@ const NAV_ITEMS: readonly NavItem[] = [
     label: "Appointments",
     icon: <LayoutDashboard aria-hidden />,
     description: "Schedule and status",
+  },
+  {
+    href: "/referrals",
+    label: "Referred patients",
+    icon: <Share2 aria-hidden />,
+    description: "Incoming referrals",
   },
   {
     href: "/beds",
@@ -228,6 +236,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
 
             <div className="flex items-center gap-1">
+              <LanguageToggle />
               <ThemeToggle mode="menu" />
               <AccountMenu />
             </div>

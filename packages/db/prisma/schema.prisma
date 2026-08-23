@@ -28,6 +28,7 @@ enum AppointmentStatus {
   IN_PROGRESS
   COMPLETED
   CANCELLED
+  TIMED_OUT
 }
 
 enum BedType {
@@ -48,6 +49,8 @@ model Patient {
 
   medicalHistory MedicalHistory?
   appointments   Appointment[]
+  referrals      Referral[]
+  feedbacks      Feedback[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -94,6 +97,9 @@ model Hospital {
   appointments Appointment[]
   beds         BedInventory[]
   medicines    MedicineInventory[]
+  referralsSent     Referral[] @relation("ReferringHospital")
+  referralsReceived Referral[] @relation("ConnectedHospital")
+  feedbacks         Feedback[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -136,6 +142,7 @@ model Doctor {
 
   specialization  String
   experienceYears Int    @default(0)
+  rating          Float  @default(4.0)
 
   hospitalId String
   hospital   Hospital @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
@@ -149,6 +156,9 @@ model Doctor {
   mustChangePassword Boolean @default(true)
 
   appointments Appointment[]
+  referralsSent     Referral[] @relation("ReferringDoctor")
+  referralsReceived Referral[] @relation("ConnectedDoctor")
+  feedbacks         Feedback[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -187,6 +197,8 @@ model Appointment {
   startedAt   DateTime?
   completedAt DateTime?
   notes       String?
+  receiveSms  Boolean   @default(true)
+  feedback    Feedback?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -232,4 +244,60 @@ model MedicineInventory {
 
   @@index([hospitalId])
   @@index([hospitalId, name])
+}
+
+model Referral {
+  id        String  @id @default(cuid())
+  patientId String
+  patient   Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  referringDoctorId String
+  referringDoctor   Doctor @relation("ReferringDoctor", fields: [referringDoctorId], references: [id], onDelete: Cascade)
+
+  referringHospitalId String
+  referringHospital   Hospital @relation("ReferringHospital", fields: [referringHospitalId], references: [id], onDelete: Cascade)
+
+  reason               String
+  targetSpecialization String?
+
+  status String @default("OPEN")
+
+  connectedDoctorId String?
+  connectedDoctor   Doctor? @relation("ConnectedDoctor", fields: [connectedDoctorId], references: [id], onDelete: SetNull)
+
+  connectedHospitalId String?
+  connectedHospital   Hospital? @relation("ConnectedHospital", fields: [connectedHospitalId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([patientId])
+  @@index([referringHospitalId])
+  @@index([referringDoctorId])
+  @@index([status])
+}
+
+model Feedback {
+  id            String      @id @default(cuid())
+  appointmentId String      @unique
+  appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+
+  patientId String
+  patient   Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  doctorId String
+  doctor   Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  hospitalId String
+  hospital   Hospital @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+
+  doctorRating   Int
+  hospitalRating Int
+  comment        String?
+
+  createdAt DateTime @default(now())
+
+  @@index([doctorId])
+  @@index([hospitalId])
+  @@index([patientId])
 }

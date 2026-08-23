@@ -32,7 +32,7 @@ export default async function RootLayout({
       <head>
         <ThemeScript />
       </head>
-      <body className="min-h-dvh bg-background text-foreground">
+      <body suppressHydrationWarning className="min-h-dvh bg-background text-foreground">
         <Providers token={token}>{children}</Providers>
       </body>
     </html>

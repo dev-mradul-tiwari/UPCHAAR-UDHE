@@ -15,6 +15,7 @@ import {
 import { Skeleton } from "@upchaar/ui/skeleton";
 import { Badge } from "@upchaar/ui/badge";
 
+import { Star } from "lucide-react";
 import { api } from "@/lib/api";
 import { useHospital } from "@/components/session-provider";
 import { DoctorDialog } from "./doctor-dialog";
@@ -92,7 +93,15 @@ export function DoctorsContent() {
               ) : doctors.length > 0 ? (
                 doctors.map((doctor) => (
                   <TableRow key={doctor.id}>
-                    <TableCell className="font-medium">{doctor.name}</TableCell>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        <span>{doctor.name}</span>
+                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-semibold text-amber-500">
+                          <Star className="size-3 fill-amber-400 text-amber-400" />
+                          {(doctor.rating ?? 4.0).toFixed(1)}
+                        </span>
+                      </div>
+                    </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {doctor.email}
                     </TableCell>

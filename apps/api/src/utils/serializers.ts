@@ -83,6 +83,7 @@ export function toDoctor(doctor: DoctorWithRelations): Doctor {
     phone: doctor.phone,
     specialization: doctor.specialization,
     experienceYears: doctor.experienceYears,
+    rating: (doctor as any).rating ?? 4.0,
     isAvailable: doctor.isAvailable,
     mustChangePassword: doctor.mustChangePassword,
     hospitalId: doctor.hospitalId,
@@ -170,6 +171,7 @@ export function toHospitalDetail(hospital: HospitalWithDetail): HospitalDetail {
       name: doctor.name,
       specialization: doctor.specialization,
       experienceYears: doctor.experienceYears,
+      rating: (doctor as any).rating ?? 4.0,
       isAvailable: doctor.isAvailable,
       departmentId: doctor.departmentId,
       departmentName: doctor.department?.name ?? null,
@@ -187,6 +189,7 @@ export function toAppointment(appointment: AppointmentWithRelations): Appointmen
     scheduledFor: toIso(appointment.scheduledFor),
     queueNumber: appointment.queueNumber,
     notes: appointment.notes,
+    receiveSms: appointment.receiveSms,
     startedAt: toIsoOrNull(appointment.startedAt),
     completedAt: toIsoOrNull(appointment.completedAt),
     createdAt: toIso(appointment.createdAt),
@@ -220,6 +223,7 @@ export function toAppointment(appointment: AppointmentWithRelations): Appointmen
 export function toQueueEntry(appointment: AppointmentWithRelations): QueueEntry {
   return {
     appointmentId: appointment.id,
+    patientId: appointment.patientId,
     queueNumber: appointment.queueNumber,
     status: appointment.status,
     patientName: appointment.patient?.name ?? "Unknown patient",

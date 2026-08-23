@@ -32,58 +32,15 @@ import {
 } from "@upchaar/ui/sheet";
 import { Skeleton } from "@upchaar/ui/skeleton";
 import { ThemeToggle } from "@upchaar/ui/theme-toggle";
+import { LanguageToggle } from "@upchaar/ui/language-toggle";
+import { useLanguage } from "@upchaar/ui/language-provider";
 import { UserAvatar } from "@upchaar/ui/avatar";
 import { cn } from "@upchaar/ui/lib/utils";
 
 import { Brand } from "@/components/brand";
+import { FeedbackDialog } from "@/components/feedback/feedback-dialog";
 import { usePatient, useSignOut } from "@/components/session-provider";
 import { isApiError } from "@/lib/api";
-
-type NavItem = {
-  href: string;
-  label: string;
-  icon: React.ReactNode;
-  description: string;
-};
-
-const NAV_ITEMS: readonly NavItem[] = [
-  {
-    href: "/dashboard",
-    label: "Dashboard",
-    icon: <LayoutDashboard aria-hidden />,
-    description: "Your day at a glance",
-  },
-  {
-    href: "/hospitals",
-    label: "Find care",
-    icon: <Hospital aria-hidden />,
-    description: "Search hospitals and beds",
-  },
-  {
-    href: "/appointments",
-    label: "Appointments",
-    icon: <CalendarDays aria-hidden />,
-    description: "Bookings and live queue",
-  },
-  {
-    href: "/records",
-    label: "Health records",
-    icon: <Stethoscope aria-hidden />,
-    description: "Your medical history",
-  },
-  {
-    href: "/assistant",
-    label: "Dr. Positive",
-    icon: <MessageCircleHeart aria-hidden />,
-    description: "Calm, guided answers",
-  },
-  {
-    href: "/medicines",
-    label: "Medicine check",
-    icon: <Pill aria-hidden />,
-    description: "Drug interaction report",
-  },
-];
 
 function isActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
@@ -91,31 +48,82 @@ function isActive(pathname: string, href: string): boolean {
 
 function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
+  const { t } = useLanguage();
+
+  const navItems = [
+    {
+      href: "/dashboard",
+      label: t("dashboard"),
+      icon: <LayoutDashboard aria-hidden />,
+      description: t("dashboard_desc"),
+    },
+    {
+      href: "/hospitals",
+      label: t("find_care"),
+      icon: <Hospital aria-hidden />,
+      description: t("find_care_desc"),
+    },
+    {
+      href: "/appointments",
+      label: t("appointments"),
+      icon: <CalendarDays aria-hidden />,
+      description: t("appointments_desc"),
+    },
+    {
+      href: "/records",
+      label: t("health_records"),
+      icon: <Stethoscope aria-hidden />,
+      description: t("health_records_desc"),
+    },
+    {
+      href: "/assistant",
+      label: t("dr_positive"),
+      icon: <MessageCircleHeart aria-hidden />,
+      description: t("dr_positive_desc"),
+    },
+    {
+      href: "/medicines",
+      label: t("medicine_check"),
+      icon: <Pill aria-hidden />,
+      description: t("medicine_check_desc"),
+    },
+  ];
 
   return (
     <nav aria-label="Main" className="grid gap-1">
-      {NAV_ITEMS.map((item) => {
+      {navItems.map((item) => {
         const active = isActive(pathname, item.href);
         return (
           <Link
             key={item.href}
             href={item.href}
             onClick={onNavigate}
-            aria-current={active ? "page" : undefined}
             className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-              "outline-none focus-visible:ring-[3px] focus-visible:ring-ring/45",
-              "[&_svg]:size-4.5 [&_svg]:shrink-0",
+              "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/45",
               active
-                ? "bg-primary-subtle text-primary-subtle-foreground"
-                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                ? "bg-primary text-primary-foreground shadow-xs"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
           >
-            {item.icon}
-            <span className="flex flex-col leading-tight">
-              {item.label}
-              <span className="text-2xs font-normal opacity-70">{item.description}</span>
+            <span
+              className={cn(
+                "size-5 shrink-0 transition-transform group-hover:scale-110",
+                active ? "text-primary-foreground" : "text-muted-foreground",
+              )}
+            >
+              {item.icon}
             </span>
+            <div className="flex flex-col">
+              <span className="leading-tight">{item.label}</span>
+              <span
+                className={cn(
+                  "text-[11px] leading-tight font-normal",
+                  active ? "text-primary-foreground/80" : "text-muted-foreground/70",
+                )}
+              >
+                {item.description}
+              </span>
+            </div>
           </Link>
         );
       })}
@@ -239,6 +247,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
 
             <div className="flex items-center gap-1">
+              <LanguageToggle />
               <ThemeToggle mode="menu" />
               <AccountMenu />
             </div>
@@ -248,6 +257,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
           {children}
         </main>
+
+        <FeedbackDialog />
 
         <footer className="mx-auto w-full max-w-5xl px-4 py-6 text-xs text-muted-foreground sm:px-6 lg:px-8">
           Upchaar · Guidance here never replaces a clinician's advice.

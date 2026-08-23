@@ -11,9 +11,11 @@ import type {
   AppointmentStatus,
   BookAppointmentInput,
   ChatMessage,
+  CreateFeedbackInput,
   Department,
   Doctor,
   DrugInteractionReport,
+  Feedback,
   HospitalDetail,
   HospitalSummary,
   LoginInput,
@@ -23,6 +25,7 @@ import type {
   PatientRecord,
   PatientRegisterInput,
   QueueStatus,
+  Referral,
   Role,
   SlotAvailability,
 } from "@upchaar/types";
@@ -323,10 +326,13 @@ export const api = {
   },
 
   records: {
-    mine: () => apiRequest<PatientRecord>("/records/me"),
+    mine: (token?: string) => apiRequest<PatientRecord>("/records/me", { token }),
 
     save: (input: MedicalHistoryInput) =>
       apiRequest<PatientRecord>("/records/me", { method: "PUT", body: input }),
+
+    updatePhone: (phone: string) =>
+      apiRequest<PatientRecord>("/records/me/phone", { method: "PATCH", body: { phone } }),
   },
 
   ai: {
@@ -335,6 +341,25 @@ export const api = {
         method: "POST",
         body: { medicines },
       }),
+  },
+
+  referrals: {
+    myReferrals: () => apiRequest<Referral[]>("/referrals/my"),
+  },
+
+  feedback: {
+    submit: (input: CreateFeedbackInput) =>
+      apiRequest<Feedback>("/feedback", { method: "POST", body: input }),
+    pending: () =>
+      apiRequest<
+        Array<{
+          appointmentId: string;
+          scheduledFor: string;
+          completedAt: string | null;
+          doctor: { id: string; name: string; specialization: string } | null;
+          hospital: { id: string; name: string; city: string } | null;
+        }>
+      >("/feedback/pending"),
   },
 } as const;
 

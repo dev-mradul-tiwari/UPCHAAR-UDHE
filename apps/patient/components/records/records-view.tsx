@@ -100,9 +100,25 @@ export function RecordsView() {
   const { data: record, isPending, error } = useMedicalRecord();
 
   const [editing, setEditing] = React.useState(false);
+  const [editingPhone, setEditingPhone] = React.useState(false);
+  const [newPhone, setNewPhone] = React.useState("");
   const [draft, setDraft] = React.useState<Draft>(EMPTY_DRAFT);
   const [errors, setErrors] = React.useState<FieldErrors>({});
   const [failure, setFailure] = React.useState<unknown>(null);
+
+  const updatePhoneMutation = useMutation({
+    mutationFn: (phone: string) => api.records.updatePhone(phone),
+    onSuccess: (updatedRecord) => {
+      queryClient.setQueryData(queryKeys.records(), updatedRecord);
+      setEditingPhone(false);
+      toast.success("Mobile number updated successfully", {
+        description: "All future SMS alerts will be sent exclusively to your new mobile number.",
+      });
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || "Failed to update mobile number.");
+    },
+  });
 
   const save = useMutation({
     mutationFn: (input: MedicalHistoryInput) => api.records.save(input),
@@ -209,7 +225,50 @@ export function RecordsView() {
             <div className="flex items-center gap-2">
               <Phone aria-hidden className="size-4 shrink-0 text-muted-foreground" />
               <dt className="sr-only">Phone</dt>
-              <dd className="text-foreground">{patient.phone}</dd>
+              {editingPhone ? (
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    updatePhoneMutation.mutate(newPhone);
+                  }}
+                  className="flex items-center gap-2 flex-wrap"
+                >
+                  <input
+                    type="text"
+                    value={newPhone}
+                    onChange={(e) => setNewPhone(e.target.value)}
+                    placeholder="+91-9876543210"
+                    className="h-8 px-2 text-xs rounded border border-border bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+                  />
+                  <Button size="sm" type="submit" loading={updatePhoneMutation.isPending} className="h-8 px-3 text-xs">
+                    Save
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    type="button"
+                    onClick={() => setEditingPhone(false)}
+                    className="h-8 px-2 text-xs"
+                  >
+                    Cancel
+                  </Button>
+                </form>
+              ) : (
+                <dd className="flex items-center gap-2.5 text-foreground">
+                  <span>{patient.phone}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setNewPhone(patient.phone);
+                      setEditingPhone(true);
+                    }}
+                    className="inline-flex items-center gap-1 text-xs text-primary hover:underline font-medium"
+                  >
+                    <Pencil className="size-3" />
+                    Edit
+                  </button>
+                </dd>
+              )}
             </div>
           </dl>
         </CardContent>
@@ -515,7 +574,7 @@ export function RecordsView() {
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground py-2">
-                  No consultation notes recorded yet.
+                  No completed consultation notes recorded yet.
                 </p>
               )}
             </CardContent>

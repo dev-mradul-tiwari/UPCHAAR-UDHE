@@ -11,7 +11,13 @@ import { Prisma, appointmentInclude, prisma } from "../lib/db.js";
 import { ApiError } from "../utils/api-error.js";
 import { parseDayParam } from "../utils/dates.js";
 import { toAppointment } from "../utils/serializers.js";
-import { publishAppointmentChange } from "./queue.service.js";
+import {
+  checkAndTriggerQueueAlert,
+  countPeopleAhead,
+  markQueueAlertSent,
+  publishAppointmentChange,
+} from "./queue.service.js";
+import { SmsService } from "./sms.service.js";
 
 type OwnershipShape = { patientId: string; hospitalId: string; doctorId: string | null };
 
@@ -59,10 +65,27 @@ function queryFilter(query: AppointmentListQuery): Prisma.AppointmentWhereInput 
   return where;
 }
 
+export async function autoResolveTimedOutAppointments(): Promise<void> {
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+  await prisma.appointment.updateMany({
+    where: {
+      status: "PENDING",
+      scheduledFor: {
+        lte: oneHourAgo,
+      },
+    },
+    data: {
+      status: "TIMED_OUT",
+    },
+  });
+}
+
 export async function listAppointments(
   auth: AuthenticatedUser,
   query: AppointmentListQuery,
 ): Promise<Paginated<Appointment>> {
+  await autoResolveTimedOutAppointments();
+
   const where: Prisma.AppointmentWhereInput = {
     ...scopeFilter(auth),
     ...queryFilter(query),
@@ -72,7 +95,7 @@ export async function listAppointments(
     prisma.appointment.findMany({
       where,
       include: appointmentInclude,
-      orderBy: [{ scheduledDay: "desc" }, { queueNumber: "asc" }],
+      orderBy: [{ scheduledDay: "asc" }, { scheduledFor: "asc" }, { queueNumber: "asc" }],
       skip: (query.page - 1) * query.limit,
       take: query.limit,
     }),
@@ -91,6 +114,8 @@ export async function getAppointmentForCaller(
   auth: AuthenticatedUser,
   appointmentId: string,
 ): Promise<Appointment> {
+  await autoResolveTimedOutAppointments();
+
   const appointment = await prisma.appointment.findUnique({
     where: { id: appointmentId },
     include: appointmentInclude,
@@ -141,6 +166,46 @@ export async function updateAppointmentStatus(
   });
 
   publishAppointmentChange(updated, "status");
+
+  if (input.status === "CONFIRMED") {
+    const bucket = {
+      hospitalId: updated.hospitalId,
+      departmentId: updated.departmentId,
+      scheduledDay: updated.scheduledDay,
+    };
+    const peopleAhead = await countPeopleAhead(bucket, {
+      scheduledFor: updated.scheduledFor,
+      queueNumber: updated.queueNumber,
+    });
+
+    if (peopleAhead === 1) {
+      markQueueAlertSent(updated.id);
+    }
+
+    SmsService.sendAppointmentConfirmedSms({
+      patientName: updated.patient.name,
+      patientPhone: updated.patient.phone,
+      hospitalName: updated.hospital.name,
+      departmentName: updated.department.name,
+      queueNumber: updated.queueNumber,
+      scheduledFor: updated.scheduledFor,
+      peopleAhead,
+      receiveSms: updated.receiveSms,
+    }).catch((err) => console.warn("Failed to send confirmed SMS", err));
+
+    if (peopleAhead !== 1) {
+      checkAndTriggerQueueAlert(updated.id).catch(() => {});
+    }
+  } else if (input.status === "COMPLETED") {
+    SmsService.sendAppointmentCompletedSms({
+      patientName: updated.patient.name,
+      patientPhone: updated.patient.phone,
+      hospitalName: updated.hospital.name,
+      doctorName: updated.doctor?.name,
+      receiveSms: updated.receiveSms,
+    }).catch((err) => console.warn("Failed to send completed SMS", err));
+  }
+
   return toAppointment(updated);
 }
 

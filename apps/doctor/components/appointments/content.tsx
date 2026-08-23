@@ -65,11 +65,16 @@ export function AppointmentsContent() {
   const currentHour = now.getHours();
 
   const appointments = React.useMemo(() => {
-    if (!filterCurrentSlot) return rawAppointments;
-    return rawAppointments.filter((appointment) => {
-      const aptDate = new Date(appointment.scheduledFor);
-      return aptDate.getHours() === currentHour;
-    });
+    const filtered = filterCurrentSlot
+      ? rawAppointments.filter((appointment) => {
+          const aptDate = new Date(appointment.scheduledFor);
+          return aptDate.getHours() === currentHour;
+        })
+      : rawAppointments;
+
+    return [...filtered].sort(
+      (a, b) => new Date(a.scheduledFor).getTime() - new Date(b.scheduledFor).getTime(),
+    );
   }, [rawAppointments, filterCurrentSlot, currentHour]);
 
   async function handleStatusChange(appointmentId: string, newStatus: AppointmentStatus) {
@@ -91,12 +96,21 @@ export function AppointmentsContent() {
     }
   }
 
+  const ACTION_LABELS: Record<AppointmentStatus, string> = {
+    CONFIRMED: "Confirm",
+    IN_PROGRESS: "Start",
+    COMPLETED: "Complete",
+    CANCELLED: "Cancel",
+    TIMED_OUT: "Time Out",
+    PENDING: "Pending",
+  };
+
   function isTransitionAllowed(from: AppointmentStatus, to: AppointmentStatus): boolean {
     return ALLOWED_STATUS_TRANSITIONS[from]?.includes(to) ?? false;
   }
 
   function getAvailableTransitions(appointmentStatus: AppointmentStatus): AppointmentStatus[] {
-    return ALLOWED_STATUS_TRANSITIONS[appointmentStatus] ?? [];
+    return (ALLOWED_STATUS_TRANSITIONS[appointmentStatus] ?? []).filter((s) => s !== "TIMED_OUT");
   }
 
   return (
@@ -138,15 +152,16 @@ export function AppointmentsContent() {
           setStatus(val as TabValue);
           setPage(1);
         }}>
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="ALL">All</TabsTrigger>
             <TabsTrigger value="PENDING">Pending</TabsTrigger>
             <TabsTrigger value="CONFIRMED">Confirmed</TabsTrigger>
             <TabsTrigger value="IN_PROGRESS">In Progress</TabsTrigger>
             <TabsTrigger value="COMPLETED">Completed</TabsTrigger>
+            <TabsTrigger value="TIMED_OUT">Timed Out</TabsTrigger>
           </TabsList>
 
-          {["ALL", "PENDING", "CONFIRMED", "IN_PROGRESS", "COMPLETED"].map((tabStatus) => (
+          {["ALL", "PENDING", "CONFIRMED", "IN_PROGRESS", "COMPLETED", "TIMED_OUT"].map((tabStatus) => (
             <TabsContent key={tabStatus} value={tabStatus} className="mt-6">
               {isLoading ? (
                 <div className="rounded-lg border border-border overflow-hidden">
@@ -194,7 +209,7 @@ export function AppointmentsContent() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Patient</TableHead>
-                        <TableHead>Time Slot</TableHead>
+                        <TableHead>Date & Time Slot</TableHead>
                         <TableHead>Reason</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
@@ -213,8 +228,17 @@ export function AppointmentsContent() {
                                 {appointment.patient?.name ?? "Unknown"}
                               </Link>
                             </TableCell>
-                            <TableCell className="font-medium whitespace-nowrap">
-                              {formatTimeSlot(appointment.scheduledFor)}
+                            <TableCell className="text-sm whitespace-nowrap">
+                              <div className="font-medium text-foreground">
+                                {new Date(appointment.scheduledFor).toLocaleDateString("en-IN", {
+                                  day: "2-digit",
+                                  month: "2-digit",
+                                  year: "numeric",
+                                })}
+                              </div>
+                              <div className="text-xs text-muted-foreground font-normal">
+                                {formatTimeSlot(appointment.scheduledFor)}
+                              </div>
                             </TableCell>
                             <TableCell className="max-w-xs truncate">
                               {appointment.reason}
@@ -235,13 +259,7 @@ export function AppointmentsContent() {
                                     {changingAppointmentId === appointment.id ? (
                                       <Loader2 aria-hidden className="animate-spin" />
                                     ) : (
-                                      nextStatus === "CANCELLED"
-                                        ? "Cancel"
-                                        : nextStatus === "IN_PROGRESS"
-                                          ? "Start"
-                                          : nextStatus === "COMPLETED"
-                                            ? "Complete"
-                                            : "Confirm"
+                                      ACTION_LABELS[nextStatus] ?? nextStatus
                                     )}
                                   </Button>
                                 ))}

@@ -1,8 +1,11 @@
 "use client";
 
 import * as React from "react";
-import { Phone, AlertCircle, Loader2, Play, FileText, CheckCircle2 } from "lucide-react";
+import Link from "next/link";
+import { Phone, AlertCircle, Loader2, Play, FileText, CheckCircle2, Share2 } from "lucide-react";
 import { Button } from "@upchaar/ui/button";
+import { Input } from "@upchaar/ui/input";
+import { Switch } from "@upchaar/ui/switch";
 import {
   Table,
   TableBody,
@@ -58,6 +61,9 @@ export function QueueContent() {
   const [notesDialogOpen, setNotesDialogOpen] = React.useState(false);
   const [notes, setNotes] = React.useState("");
   const [savingNotes, setSavingNotes] = React.useState(false);
+  const [isReferring, setIsReferring] = React.useState(false);
+  const [referralReason, setReferralReason] = React.useState("");
+  const [targetSpecialization, setTargetSpecialization] = React.useState("");
 
   const nowServing = queue?.nowServing;
   const entries = queue?.entries ?? [];
@@ -96,6 +102,9 @@ export function QueueContent() {
       toast.success(queue?.nowServing ? "Next patient called" : "Started serving queue");
 
       setNotes("");
+      setIsReferring(false);
+      setReferralReason("");
+      setTargetSpecialization("");
       setNotesDialogOpen(true);
     } catch (error) {
       toast.error(isApiError(error) ? error.message : "Failed to call next patient");
@@ -116,16 +125,36 @@ export function QueueContent() {
       return;
     }
 
+    if (isReferring && referralReason.trim().length === 0) {
+      toast.error("Please enter a reason for referring the patient.");
+      return;
+    }
+
     setSavingNotes(true);
     try {
       await api.appointments.setStatus(activeEntry.appointmentId, "COMPLETED", trimmedNotes);
+
+      if (isReferring && activeEntry.patientId && referralReason.trim().length > 0) {
+        await api.referrals.create({
+          patientId: activeEntry.patientId,
+          reason: referralReason.trim(),
+          targetSpecialization: targetSpecialization.trim() || undefined,
+        });
+        toast.success("Consultation saved & Patient referred to other hospitals!");
+      } else {
+        toast.success("Clinical notes saved & visit completed!");
+      }
+
       await queryClient.invalidateQueries({ queryKey: ["queue"] });
       await queryClient.invalidateQueries({ queryKey: ["appointments"] });
       await queryClient.invalidateQueries({ queryKey: ["doctor"] });
-      toast.success("Clinical notes saved & visit completed!");
+      await queryClient.invalidateQueries({ queryKey: ["referrals"] });
 
       setNotesDialogOpen(false);
       setNotes("");
+      setIsReferring(false);
+      setReferralReason("");
+      setTargetSpecialization("");
     } catch (error) {
       toast.error(isApiError(error) ? error.message : "Failed to save clinical notes");
     } finally {
@@ -200,7 +229,17 @@ export function QueueContent() {
                 #{nowServing}
               </p>
               <p className="text-sm font-semibold text-primary-subtle-foreground">
-                Patient: {activeEntry?.patientName ?? "Active Patient"}
+                Patient:{" "}
+                {activeEntry?.patientId ? (
+                  <Link
+                    href={`/patients/${activeEntry.patientId}`}
+                    className="font-bold underline hover:opacity-80"
+                  >
+                    {activeEntry.patientName}
+                  </Link>
+                ) : (
+                  activeEntry?.patientName ?? "Active Patient"
+                )}
               </p>
               {activeEntry?.reason ? (
                 <p className="text-xs text-primary-subtle-foreground/80">
@@ -296,7 +335,16 @@ export function QueueContent() {
                       #{entry.queueNumber}
                     </TableCell>
                     <TableCell className="font-medium">
-                      {entry.patientName}
+                      {entry.patientId ? (
+                        <Link
+                          href={`/patients/${entry.patientId}`}
+                          className="font-medium text-primary-subtle-foreground hover:underline"
+                        >
+                          {entry.patientName}
+                        </Link>
+                      ) : (
+                        entry.patientName
+                      )}
                     </TableCell>
                     <TableCell className="max-w-xs truncate">
                       {entry.reason}
@@ -353,13 +401,56 @@ export function QueueContent() {
                 Doctor's Clinical Notes / Prescription <span className="text-destructive">*</span>
               </label>
               <Textarea
-                rows={4}
+                rows={3}
                 maxLength={1000}
                 placeholder="Write clinical diagnosis, prescribed medicines, dosage, or follow-up advice..."
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 className="text-sm resize-none"
               />
+            </div>
+
+            {/* Refer Patient Toggle & Section */}
+            <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <Share2 className="size-3.5 text-primary" />
+                  Refer Patient to Other Hospitals & Doctors
+                </span>
+                <Switch
+                  checked={isReferring}
+                  onCheckedChange={setIsReferring}
+                  aria-label="Refer patient to other hospitals"
+                />
+              </div>
+
+              {isReferring && (
+                <div className="space-y-2.5 pt-1">
+                  <div>
+                    <label className="text-xs font-medium text-foreground block mb-1">
+                      Why do you want to refer this patient? <span className="text-destructive">*</span>
+                    </label>
+                    <Textarea
+                      rows={2}
+                      placeholder="Specify critical condition, special care needed, or reason for referral..."
+                      value={referralReason}
+                      onChange={(e) => setReferralReason(e.target.value)}
+                      className="text-xs resize-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-foreground block mb-1">
+                      Target Specialization (Optional)
+                    </label>
+                    <Input
+                      placeholder="e.g. Cardiology, Neurosurgery, ICU"
+                      value={targetSpecialization}
+                      onChange={(e) => setTargetSpecialization(e.target.value)}
+                      className="text-xs h-8"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

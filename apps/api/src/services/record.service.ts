@@ -12,25 +12,27 @@ export async function getPatientRecord(patientId: string): Promise<PatientRecord
   });
   if (!patient) throw ApiError.notFound("Patient not found");
 
-  const appointmentsWithNotes = await prisma.appointment.findMany({
+  const completedAppointments = await prisma.appointment.findMany({
     where: {
       patientId,
-      notes: { not: null },
-      status: { not: "CANCELLED" },
+      status: "COMPLETED",
     },
     include: appointmentInclude,
-    orderBy: { createdAt: "desc" },
+    orderBy: { completedAt: "desc" },
   });
 
   const record = toPatientRecord(patient);
-  record.consultations = appointmentsWithNotes.map((apt) => ({
+  record.consultations = completedAppointments.map((apt) => ({
     id: apt.id,
     doctorName: apt.doctor?.name ?? "Attending Doctor",
     doctorDepartment: apt.department?.name ?? apt.doctor?.specialization?.replace(/ surgery$/i, "") ?? null,
     hospitalName: apt.hospital?.name ?? "Upchaar Hospital",
     date: toIso(apt.completedAt ?? apt.scheduledFor),
-    notes: apt.notes ?? "",
+    notes: apt.notes ?? null,
     reason: apt.reason,
+    status: apt.status,
+    scheduledFor: toIso(apt.scheduledFor),
+    queueNumber: apt.queueNumber,
   }));
 
   return record;
@@ -60,18 +62,46 @@ export async function upsertOwnRecord(
 }
 
 /**
- * A doctor may only read a record for a patient they share an appointment
- * with — anything else is a 403.
+ * A doctor may read a record for a patient with an appointment at their hospital or assigned to them.
  */
 export async function getPatientRecordForDoctor(
   doctorId: string,
   patientId: string,
 ): Promise<PatientRecord> {
+  const doctor = await prisma.doctor.findUnique({
+    where: { id: doctorId },
+    select: { hospitalId: true },
+  });
+  if (!doctor) throw ApiError.notFound("Doctor not found");
+
   const shared = await prisma.appointment.count({
-    where: { doctorId, patientId },
+    where: {
+      patientId,
+      OR: [
+        { doctorId },
+        { hospitalId: doctor.hospitalId },
+      ],
+    },
   });
   if (shared === 0) {
-    throw ApiError.forbidden("You can only view records for patients you are treating");
+    throw ApiError.forbidden("You can only view records for patients treated at your hospital");
   }
+  return getPatientRecord(patientId);
+}
+
+export async function updatePatientPhone(
+  patientId: string,
+  phone: string,
+): Promise<PatientRecord> {
+  const cleanPhone = phone.trim();
+  if (cleanPhone.length < 10) {
+    throw ApiError.badRequest("Please enter a valid mobile number.");
+  }
+
+  await prisma.patient.update({
+    where: { id: patientId },
+    data: { phone: cleanPhone },
+  });
+
   return getPatientRecord(patientId);
 }

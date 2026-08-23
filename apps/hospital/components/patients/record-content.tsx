@@ -2,17 +2,15 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, AlertTriangle } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { ArrowLeft, AlertTriangle, CalendarClock, FileText } from "lucide-react";
 import { Button } from "@upchaar/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@upchaar/ui/card";
 import { PageHeader } from "@upchaar/ui/page-header";
+import { Alert, AlertDescription, AlertTitle } from "@upchaar/ui/alert";
 import { EmptyState } from "@upchaar/ui/empty-state";
 import { Skeleton } from "@upchaar/ui/skeleton";
-import { Alert, AlertDescription, AlertTitle } from "@upchaar/ui/alert";
-
-import { isApiError } from "@/lib/api";
-import { StatusBadge } from "@/components/dashboard/status-badge";
-import { CalendarClock, FileText } from "lucide-react";
+import { api, isApiError } from "@/lib/api";
 
 function formatTimeSlot(isoDateStr: string): string {
   const d = new Date(isoDateStr);
@@ -27,7 +25,6 @@ function formatTimeSlot(isoDateStr: string): string {
 
   return `${formatHour(startHour)} – ${formatHour(endHour)}`;
 }
-import { usePatientRecord } from "@/lib/queries";
 
 interface PatientRecordContentProps {
   patientId: string;
@@ -35,7 +32,13 @@ interface PatientRecordContentProps {
 
 export function PatientRecordContent({ patientId }: PatientRecordContentProps) {
   const router = useRouter();
-  const { data: record, isLoading, error } = usePatientRecord(patientId);
+
+  const { data: record, isLoading, error } = useQuery({
+    queryKey: ["patient-record", patientId],
+    queryFn: () => api.records.patientRecord(patientId),
+    enabled: !!patientId,
+  });
+
   const patient = record?.patient;
   const history = record?.medicalHistory;
 
@@ -123,7 +126,7 @@ export function PatientRecordContent({ patientId }: PatientRecordContentProps) {
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-2">
-                  {history.chronicDiseases.map((disease, idx) => (
+                  {history.chronicDiseases.map((disease: string, idx: number) => (
                     <span
                       key={idx}
                       className="inline-flex items-center rounded-full bg-accent px-3 py-1 text-sm font-medium text-accent-foreground"
@@ -145,7 +148,7 @@ export function PatientRecordContent({ patientId }: PatientRecordContentProps) {
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-2">
-                  {history.allergies.map((allergy, idx) => (
+                  {history.allergies.map((allergy: string, idx: number) => (
                     <span
                       key={idx}
                       className="inline-flex items-center rounded-full bg-destructive/20 px-3 py-1 text-sm font-medium text-destructive"
@@ -166,7 +169,7 @@ export function PatientRecordContent({ patientId }: PatientRecordContentProps) {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  {history.pastSurgeries.map((surgery, idx) => (
+                  {history.pastSurgeries.map((surgery: string, idx: number) => (
                     <div key={idx} className="flex items-start gap-3">
                       <span className="text-muted-foreground">•</span>
                       <span className="text-sm text-foreground">{surgery}</span>
@@ -185,7 +188,7 @@ export function PatientRecordContent({ patientId }: PatientRecordContentProps) {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  {history.currentMedications.map((medication, idx) => (
+                  {history.currentMedications.map((medication: string, idx: number) => (
                     <div key={idx} className="flex items-start gap-3">
                       <span className="text-muted-foreground">•</span>
                       <span className="text-sm text-foreground">{medication}</span>
@@ -249,7 +252,7 @@ export function PatientRecordContent({ patientId }: PatientRecordContentProps) {
         <CardContent>
           {record.consultations && record.consultations.length > 0 ? (
             <div className="space-y-4">
-              {record.consultations.map((c) => (
+              {record.consultations.map((c: any) => (
                 <div
                   key={c.id}
                   className="rounded-lg border border-border bg-card p-4 space-y-3 shadow-sm"
@@ -269,7 +272,6 @@ export function PatientRecordContent({ patientId }: PatientRecordContentProps) {
                         {c.hospitalName} {c.doctorDepartment ? `· ${c.doctorDepartment}` : ""}
                       </p>
                     </div>
-                    {c.status ? <StatusBadge status={c.status as any} /> : null}
                   </div>
 
                   <div className="grid gap-2 text-sm sm:grid-cols-2">

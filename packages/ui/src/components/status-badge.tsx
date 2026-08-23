@@ -1,6 +1,6 @@
 import * as React from "react";
 import type { AppointmentStatus } from "@upchaar/types";
-import { Ban, CheckCircle2, CircleDot, Clock, Stethoscope } from "lucide-react";
+import { Ban, CheckCircle2, CircleDot, Clock, Stethoscope, TimerOff } from "lucide-react";
 
 import { cn } from "../lib/utils";
 import { Badge, type BadgeProps } from "./badge";
@@ -24,6 +24,7 @@ export const APPOINTMENT_STATUS_META: Record<AppointmentStatus, StatusMeta> = {
   },
   COMPLETED: { label: "Completed", variant: "success", icon: <CircleDot aria-hidden /> },
   CANCELLED: { label: "Cancelled", variant: "destructive", icon: <Ban aria-hidden /> },
+  TIMED_OUT: { label: "Timed Out", variant: "destructive", icon: <TimerOff aria-hidden /> },
 };
 
 export interface StatusBadgeProps extends Omit<BadgeProps, "variant" | "children"> {

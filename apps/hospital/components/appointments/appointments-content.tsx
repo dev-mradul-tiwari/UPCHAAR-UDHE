@@ -30,7 +30,21 @@ import { api, type AppointmentListParams } from "@/lib/api";
 import { AssignDoctorDialog } from "./assign-doctor-dialog";
 import { StatusChangeDialog } from "./status-change-dialog";
 
-const STATUS_TABS = ["PENDING", "CONFIRMED", "IN_PROGRESS", "COMPLETED", "CANCELLED"] as const;
+const STATUS_TABS = ["PENDING", "CONFIRMED", "IN_PROGRESS", "COMPLETED", "CANCELLED", "TIMED_OUT"] as const;
+
+function formatTimeSlot(isoDateStr: string): string {
+  const d = new Date(isoDateStr);
+  const startHour = d.getHours();
+  const endHour = (startHour + 1) % 24;
+
+  const formatHour = (h: number) => {
+    const ampm = h >= 12 ? "PM" : "AM";
+    const h12 = h % 12 === 0 ? 12 : h % 12;
+    return `${h12}:00 ${ampm}`;
+  };
+
+  return `${formatHour(startHour)} – ${formatHour(endHour)}`;
+}
 
 export function AppointmentsContent() {
   const queryClient = useQueryClient();
@@ -139,7 +153,7 @@ export function AppointmentsContent() {
                     <TableRow>
                       <TableHead>Patient</TableHead>
                       <TableHead>Department</TableHead>
-                      <TableHead>Date</TableHead>
+                      <TableHead>Date & Time Slot</TableHead>
                       <TableHead>Doctor</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
@@ -174,8 +188,13 @@ export function AppointmentsContent() {
                         <TableRow key={apt.id}>
                           <TableCell className="font-medium">{apt.patient?.name || "-"}</TableCell>
                           <TableCell className="text-sm">{apt.department?.name || "-"}</TableCell>
-                          <TableCell className="text-sm">
-                            {new Date(apt.scheduledFor).toLocaleDateString()}
+                          <TableCell className="text-sm whitespace-nowrap">
+                            <div className="font-medium text-foreground">
+                              {new Date(apt.scheduledFor).toLocaleDateString()}
+                            </div>
+                            <div className="text-xs text-muted-foreground font-normal">
+                              {formatTimeSlot(apt.scheduledFor)}
+                            </div>
                           </TableCell>
                           <TableCell className="text-sm">
                             {apt.doctor?.name || "-"}

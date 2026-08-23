@@ -18,11 +18,12 @@ interface StatusChangeDialogProps {
 }
 
 const STATUS_TRANSITIONS: Record<AppointmentStatus, AppointmentStatus[]> = {
-  PENDING: ["CONFIRMED", "CANCELLED"],
+  PENDING: ["CONFIRMED", "CANCELLED", "TIMED_OUT"],
   CONFIRMED: ["IN_PROGRESS", "CANCELLED"],
   IN_PROGRESS: ["COMPLETED"],
   COMPLETED: [],
   CANCELLED: [],
+  TIMED_OUT: [],
 };
 
 export function StatusChangeDialog({

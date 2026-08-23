@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, CalendarCheck, Info } from "lucide-react";
 import { bookAppointmentSchema, type BookAppointmentInput } from "@upchaar/types";
 import { Alert, AlertDescription, AlertTitle } from "@upchaar/ui/alert";
@@ -54,10 +55,15 @@ export function BookAppointmentForm() {
   const [departmentId, setDepartmentId] = React.useState(
     () => searchParams.get("departmentId") ?? "",
   );
-  const [doctorId, setDoctorId] = React.useState(NO_PREFERENCE);
+  const [doctorId, setDoctorId] = React.useState(
+    () => searchParams.get("doctorId") || NO_PREFERENCE,
+  );
   const [date, setDate] = React.useState(() => todayInputValue());
   const [time, setTime] = React.useState("");
-  const [reason, setReason] = React.useState("");
+  const [reason, setReason] = React.useState(
+    () => searchParams.get("reason") ?? "",
+  );
+  const [receiveSms, setReceiveSms] = React.useState(true);
 
   const [errors, setErrors] = React.useState<FieldErrors>({});
   const [failure, setFailure] = React.useState<unknown>(null);
@@ -74,6 +80,32 @@ export function BookAppointmentForm() {
     departmentId.length > 0 ? departmentId : undefined,
     date.length > 0 ? date : undefined,
   );
+
+  // Auto pre-select department / doctor ONCE when initial data is available
+  const hasAutoPreselectedRef = React.useRef(false);
+
+  React.useEffect(() => {
+    if (hasAutoPreselectedRef.current) return;
+
+    if (!departmentId && departments.data && departments.data.length > 0) {
+      const urlDoctorId = searchParams.get("doctorId");
+      if (urlDoctorId && doctors.data && doctors.data.length > 0) {
+        const found = doctors.data.find((d) => d.id === urlDoctorId);
+        if (found && found.departmentId) {
+          setDepartmentId(found.departmentId);
+          setDoctorId(found.id);
+          hasAutoPreselectedRef.current = true;
+          return;
+        }
+      }
+
+      const firstDept = departments.data[0];
+      if (firstDept) {
+        setDepartmentId(firstDept.id);
+        hasAutoPreselectedRef.current = true;
+      }
+    }
+  }, [departments.data, doctors.data, departmentId, searchParams]);
 
   const hospitalOptions = hospitals.data?.items ?? [];
   const departmentOptions = React.useMemo(
@@ -100,9 +132,24 @@ export function BookAppointmentForm() {
     setDoctorId(NO_PREFERENCE);
   }
 
+  const pendingFeedbackQuery = useQuery({
+    queryKey: ["pending-feedback"],
+    queryFn: () => api.feedback.pending(),
+  });
+  const hasPendingFeedback = (pendingFeedbackQuery.data ?? []).length > 0;
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setFailure(null);
+
+    if (hasPendingFeedback) {
+      setFailure(
+        new Error(
+          "Please complete feedback for your previous completed appointment before booking a new one.",
+        ),
+      );
+      return;
+    }
 
     const scheduledFor = toIsoDateTime(date, time);
     if (scheduledFor === null) {
@@ -116,6 +163,7 @@ export function BookAppointmentForm() {
       doctorId: doctorId === NO_PREFERENCE ? undefined : doctorId,
       reason,
       scheduledFor,
+      receiveSms,
     });
 
     if (!parsed.success) {
@@ -166,6 +214,15 @@ export function BookAppointmentForm() {
         </CardHeader>
 
         <CardContent>
+          {hasPendingFeedback && (
+            <Alert variant="destructive" className="mb-5">
+              <AlertTitle>Rating Required</AlertTitle>
+              <AlertDescription>
+                Please rate your last completed appointment before booking a new one. The rating dialog has opened for you.
+              </AlertDescription>
+            </Alert>
+          )}
+
           <form className="grid gap-5" onSubmit={handleSubmit} noValidate>
             <FormAlert error={failure} fallback="We could not book that appointment." />
 
@@ -364,6 +421,19 @@ export function BookAppointmentForm() {
                 />
               )}
             </FormField>
+
+            <div className="flex items-center space-x-2.5 rounded-lg border border-border bg-accent/20 p-3.5">
+              <input
+                type="checkbox"
+                id="receiveSms"
+                checked={receiveSms}
+                onChange={(event) => setReceiveSms(event.target.checked)}
+                className="size-4 rounded border-border text-primary focus:ring-primary accent-primary"
+              />
+              <label htmlFor="receiveSms" className="text-xs font-medium text-foreground cursor-pointer select-none">
+                Receive instant SMS updates for this appointment (Booking, Queue Alerts & Confirmation)
+              </label>
+            </div>
 
             {selectedDepartment !== undefined ? (
               <Alert variant="info">

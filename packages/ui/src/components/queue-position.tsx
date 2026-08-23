@@ -4,6 +4,8 @@ import { Clock, Users } from "lucide-react";
 import { cn } from "../lib/utils";
 import { Skeleton } from "./skeleton";
 
+import { useLanguage } from "./language-provider";
+
 export interface QueuePositionProps extends React.ComponentProps<"div"> {
   /** 1-based live position. `null` while unknown. */
   position: number | null;
@@ -18,14 +20,6 @@ export interface QueuePositionProps extends React.ComponentProps<"div"> {
   variant?: "card" | "bare";
 }
 
-function formatWait(minutes: number): string {
-  if (minutes <= 0) return "Any moment now";
-  if (minutes < 60) return `~${minutes} min`;
-  const hours = Math.floor(minutes / 60);
-  const rest = minutes % 60;
-  return rest === 0 ? `~${hours} hr` : `~${hours} hr ${rest} min`;
-}
-
 /**
  * The headline patient-facing display: a very large queue number with the
  * supporting people-ahead and estimated-wait facts. Announces changes politely
@@ -35,14 +29,26 @@ export function QueuePosition({
   position,
   peopleAhead,
   estimatedWaitMinutes,
-  label = "Your position in queue",
+  label,
   loading = false,
   variant = "card",
   className,
   children,
   ...props
 }: QueuePositionProps) {
+  const { language, t } = useLanguage();
   const isNext = position !== null && position <= 1;
+  const displayLabel = label ?? t("position_in_queue");
+
+  const formatWait = (minutes: number): string => {
+    if (minutes <= 0) return language === "hi" ? "किसी भी क्षण" : "Any moment now";
+    if (minutes < 60) return language === "hi" ? `~${minutes} मिनट` : `~${minutes} min`;
+    const hours = Math.floor(minutes / 60);
+    const rest = minutes % 60;
+    return rest === 0
+      ? (language === "hi" ? `~${hours} घंटे` : `~${hours} hr`)
+      : (language === "hi" ? `~${hours} घंटे ${rest} मिनट` : `~${hours} hr ${rest} min`);
+  };
 
   return (
     <div
@@ -56,7 +62,7 @@ export function QueuePosition({
       )}
       {...props}
     >
-      <span className="text-sm font-medium text-muted-foreground">{label}</span>
+      <span className="text-sm font-medium text-muted-foreground">{displayLabel}</span>
 
       {loading ? (
         <Skeleton className="h-20 w-28" />
@@ -83,7 +89,7 @@ export function QueuePosition({
 
       {isNext && !loading ? (
         <span className="rounded-full bg-success-subtle px-3 py-1 text-xs font-semibold text-success-subtle-foreground">
-          You are next
+          {language === "hi" ? "आपकी बारी है" : "You are next"}
         </span>
       ) : null}
 
@@ -93,7 +99,7 @@ export function QueuePosition({
             <div className="flex flex-col items-center gap-1">
               <dt className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <Users aria-hidden className="size-3.5" />
-                Ahead of you
+                {t("ahead_of_you")}
               </dt>
               <dd className="text-lg font-semibold tabular-nums text-foreground">
                 {peopleAhead}
@@ -105,7 +111,7 @@ export function QueuePosition({
             <div className="flex flex-col items-center gap-1">
               <dt className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <Clock aria-hidden className="size-3.5" />
-                Estimated wait
+                {t("estimated_wait")}
               </dt>
               <dd className="text-lg font-semibold text-foreground">
                 {formatWait(estimatedWaitMinutes)}

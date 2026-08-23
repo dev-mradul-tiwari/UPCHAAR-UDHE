@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { CheckCircle2, CircleSlash, Info, RefreshCw } from "lucide-react";
+import { CheckCircle2, CircleSlash, Info, RefreshCw, TimerOff } from "lucide-react";
 import type { AppointmentStatus } from "@upchaar/types";
 import { Alert, AlertDescription, AlertTitle } from "@upchaar/ui/alert";
 import {
@@ -18,6 +18,7 @@ import { QueuePosition } from "@upchaar/ui/queue-position";
 import { LiveIndicator } from "@/components/queue/live-indicator";
 import { useLiveQueue, useTicker } from "@/hooks/use-live-queue";
 import { errorMessage } from "@/lib/api";
+import { formatPrevSlotWindow, formatSlotWindow } from "@/lib/format";
 import { useQueueStatus } from "@/lib/queries";
 
 /** Statuses that still have a place in the queue. */
@@ -98,23 +99,47 @@ export function LiveQueueCard({ appointmentId, variant = "full" }: LiveQueueCard
             </dl>
           </div>
         ) : inQueue ? (
-          <QueuePosition
-            variant="bare"
-            position={status.position}
-            peopleAhead={status.peopleAhead ?? undefined}
-            estimatedWaitMinutes={status.estimatedWaitMinutes ?? undefined}
-            label={
-              status.status === "IN_PROGRESS"
-                ? "You are with the doctor now"
-                : "Your position in queue"
-            }
-          />
+          <div className="grid gap-4">
+            {status.status === "CONFIRMED" && status.estimatedWaitMinutes === null ? (
+              <Alert variant="default" className="border-primary/20 bg-primary/5">
+                <Info aria-hidden className="size-4 text-primary" />
+                <AlertTitle className="font-semibold text-foreground">Appointment Booked</AlertTitle>
+                <AlertDescription className="text-xs leading-relaxed text-muted-foreground mt-1">
+                  Your appointment has been booked for{" "}
+                  <strong className="text-foreground">
+                    {status.scheduledFor ? formatSlotWindow(status.scheduledFor) : "your time slot"}
+                  </strong>
+                  . Estimated wait time will start appearing when the previous slot (
+                  {status.scheduledFor ? formatPrevSlotWindow(status.scheduledFor) : "earlier slot"}) time has started.
+                </AlertDescription>
+              </Alert>
+            ) : null}
+            <QueuePosition
+              variant="bare"
+              position={status.position}
+              peopleAhead={status.peopleAhead ?? undefined}
+              estimatedWaitMinutes={status.estimatedWaitMinutes ?? undefined}
+              label={
+                status.status === "IN_PROGRESS"
+                  ? "You are with the doctor now"
+                  : "Your position in queue"
+              }
+            />
+          </div>
         ) : status.status === "COMPLETED" ? (
           <Alert variant="success">
             <CheckCircle2 aria-hidden />
             <AlertTitle>This visit is complete</AlertTitle>
             <AlertDescription>
               Take care. Your record is up to date under Health records.
+            </AlertDescription>
+          </Alert>
+        ) : status.status === "TIMED_OUT" ? (
+          <Alert variant="destructive">
+            <TimerOff aria-hidden />
+            <AlertTitle>Appointment Timed Out</AlertTitle>
+            <AlertDescription>
+              This appointment was not confirmed by the hospital or doctor within the scheduled time slot and has timed out. Please book a new slot if you still require care.
             </AlertDescription>
           </Alert>
         ) : (

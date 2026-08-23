@@ -10,6 +10,7 @@ import type {
   Appointment,
   AppointmentStatus,
   ChangePasswordInput,
+  CreateReferralInput,
   Department,
   DepartmentQueue,
   Doctor,
@@ -18,6 +19,7 @@ import type {
   LoginInput,
   Paginated,
   PatientRecord,
+  Referral,
   Role,
 } from "@upchaar/types";
 
@@ -322,6 +324,15 @@ export const api = {
   records: {
     forPatient: (patientId: string) =>
       apiRequest<PatientRecord>(`/records/patient/${patientId}`),
+  },
+
+  referrals: {
+    list: () => apiRequest<Referral[]>("/referrals"),
+    create: (input: CreateReferralInput) =>
+      apiRequest<Referral>("/referrals", { method: "POST", body: input }),
+    connect: (id: string, body?: { doctorId?: string }) =>
+      apiRequest<Referral>(`/referrals/${id}/connect`, { method: "POST", body: body ?? {} }),
+    myReferrals: () => apiRequest<Referral[]>("/referrals/my"),
   },
 } as const;
 

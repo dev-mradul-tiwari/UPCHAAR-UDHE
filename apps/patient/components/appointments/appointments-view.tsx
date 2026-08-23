@@ -36,6 +36,7 @@ const FILTERS: ReadonlyArray<{ value: Filter; label: string }> = [
   { value: "IN_PROGRESS", label: "In progress" },
   { value: "COMPLETED", label: "Completed" },
   { value: "CANCELLED", label: "Cancelled" },
+  { value: "TIMED_OUT", label: "Timed Out" },
 ];
 
 const CANCELLABLE: readonly AppointmentStatus[] = ["PENDING", "CONFIRMED"];

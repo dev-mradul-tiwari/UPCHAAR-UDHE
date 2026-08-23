@@ -253,3 +253,19 @@ export type {
 
 export { ThemeToggle } from "./components/theme-toggle";
 export type { ThemeToggleProps } from "./components/theme-toggle";
+
+export {
+  LanguageProvider,
+  useLanguage,
+  translations,
+  DEFAULT_LANGUAGE_STORAGE_KEY,
+} from "./components/language-provider";
+export type {
+  Language,
+  Translations,
+  LanguageContextValue,
+  LanguageProviderProps,
+} from "./components/language-provider";
+
+export { LanguageToggle } from "./components/language-toggle";
+export type { LanguageToggleProps } from "./components/language-toggle";

@@ -112,9 +112,9 @@ export function DashboardContent() {
       />
 
       {/* Stats cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {statsLoading ? (
-          Array.from({ length: 4 }).map((_, i) => (
+          Array.from({ length: 5 }).map((_, i) => (
             <div
               key={i}
               className="rounded-lg border border-border bg-card p-4 sm:p-6"
@@ -123,30 +123,35 @@ export function DashboardContent() {
               <Skeleton className="h-8 w-12" />
             </div>
           ))
-        ) : stats ? (
+        ) : (
           <>
             <StatCard
+              label="Doctor Rating"
+              value={`★ ${(doctor?.rating ?? 4.0).toFixed(1)}`}
+              unit="out of 5.0 stars"
+            />
+            <StatCard
               label="Today Total"
-              value={stats.todayTotal}
+              value={stats?.todayTotal ?? 0}
               unit="appointments scheduled"
             />
             <StatCard
               label="Seen Today"
-              value={stats.seenToday}
+              value={stats?.seenToday ?? 0}
               unit="completed"
             />
             <StatCard
               label="Waiting"
-              value={stats.waitingToday}
+              value={stats?.waitingToday ?? 0}
               unit="in queue"
             />
             <StatCard
               label="Avg Duration"
-              value={`${stats.avgConsultMinutes}m`}
+              value={`${stats?.avgConsultMinutes ?? 15}m`}
               unit="per consultation"
             />
           </>
-        ) : null}
+        )}
       </div>
 
       {/* Today's appointments */}

@@ -34,6 +34,23 @@ export function formatDateTime(iso: string): string {
   return `${formatDate(iso)} · ${formatTime(iso)}`;
 }
 
+/** "9:00 am - 10:00 am" */
+export function formatSlotWindow(iso: string): string {
+  const start = new Date(iso);
+  const end = new Date(start.getTime() + 60 * 60 * 1000);
+  return `${formatTime(start.toISOString())} - ${formatTime(end.toISOString())}`;
+}
+
+/** "8:00 am - 9:00 am" (or "8:00 am" if slot starts at 8:00 am) */
+export function formatPrevSlotWindow(iso: string): string {
+  const start = new Date(iso);
+  const prevStart = new Date(start.getTime() - 60 * 60 * 1000);
+  if (start.getHours() <= 8) {
+    return `${formatTime(start.toISOString())}`;
+  }
+  return `${formatTime(prevStart.toISOString())} - ${formatTime(start.toISOString())}`;
+}
+
 /** "in 2 days" / "3 hours ago" — calm, human phrasing for a patient. */
 export function formatRelative(iso: string, now: Date = new Date()): string {
   const target = new Date(iso).getTime();

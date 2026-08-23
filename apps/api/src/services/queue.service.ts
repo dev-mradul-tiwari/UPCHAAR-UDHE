@@ -18,6 +18,7 @@ import { ApiError } from "../utils/api-error.js";
 import { startOfUtcDay, todayUtc } from "../utils/dates.js";
 import { logger } from "../utils/logger.js";
 import { toAppointment, toQueueEntry } from "../utils/serializers.js";
+import { SmsService } from "./sms.service.js";
 
 /** Statuses that occupy a slot in the live queue (see docs/ARCHITECTURE.md). */
 const ACTIVE_QUEUE_STATUSES: AppointmentStatus[] = ["CONFIRMED", "IN_PROGRESS"];
@@ -189,6 +190,7 @@ export async function bookAppointment(
             departmentId: input.departmentId,
             doctorId: input.doctorId ?? null,
             reason: input.reason,
+            receiveSms: input.receiveSms !== false,
             scheduledFor,
             scheduledDay,
             queueNumber,
@@ -198,6 +200,16 @@ export async function bookAppointment(
       });
 
       publishAppointmentChange(appointment, "created");
+      SmsService.sendBookingCreatedSms({
+        patientName: appointment.patient.name,
+        patientPhone: appointment.patient.phone,
+        hospitalName: appointment.hospital.name,
+        departmentName: appointment.department.name,
+        queueNumber: appointment.queueNumber,
+        scheduledFor: appointment.scheduledFor,
+        receiveSms: appointment.receiveSms,
+      }).catch((err) => logger.warn("Failed to send booking created SMS", { err }));
+
       return toAppointment(appointment);
     } catch (error) {
       if (isPrismaKnownError(error, "P2002") && attempt < MAX_QUEUE_ALLOCATION_ATTEMPTS) {
@@ -218,7 +230,7 @@ export async function bookAppointment(
 
 type QueueBucket = { hospitalId: string; departmentId: string; scheduledDay: Date };
 
-async function countPeopleAhead(
+export async function countPeopleAhead(
   bucket: QueueBucket,
   appointment: { scheduledFor: Date; queueNumber: number },
 ): Promise<number> {
@@ -254,11 +266,22 @@ async function findNowServing(bucket: QueueBucket): Promise<number | null> {
 }
 
 export async function getQueueStatus(appointmentId: string): Promise<QueueStatus> {
-  const appointment = await prisma.appointment.findUnique({
+  let appointment = await prisma.appointment.findUnique({
     where: { id: appointmentId },
     include: { department: { select: { id: true, name: true, avgConsultMinutes: true } } },
   });
   if (!appointment) throw ApiError.notFound("Appointment not found");
+
+  if (
+    appointment.status === "PENDING" &&
+    new Date(appointment.scheduledFor).getTime() + 60 * 60 * 1000 <= Date.now()
+  ) {
+    appointment = await prisma.appointment.update({
+      where: { id: appointmentId },
+      data: { status: "TIMED_OUT" },
+      include: { department: { select: { id: true, name: true, avgConsultMinutes: true } } },
+    });
+  }
 
   const bucket: QueueBucket = {
     hospitalId: appointment.hospitalId,
@@ -280,6 +303,7 @@ export async function getQueueStatus(appointmentId: string): Promise<QueueStatus
       nowServing,
       departmentId: appointment.departmentId,
       departmentName: appointment.department.name,
+      scheduledFor: appointment.scheduledFor.toISOString(),
     };
   }
 
@@ -295,6 +319,7 @@ export async function getQueueStatus(appointmentId: string): Promise<QueueStatus
       nowServing,
       departmentId: appointment.departmentId,
       departmentName: appointment.department.name,
+      scheduledFor: appointment.scheduledFor.toISOString(),
     };
   }
 
@@ -303,10 +328,23 @@ export async function getQueueStatus(appointmentId: string): Promise<QueueStatus
     queueNumber: appointment.queueNumber,
   });
 
+  if (peopleAhead === 1) {
+    checkAndTriggerQueueAlert(appointment.id).catch(() => {});
+  }
+
   const now = new Date();
   const slotStartTime = new Date(appointment.scheduledFor);
-  const timeUntilSlotStart = Math.max(0, Math.floor((slotStartTime.getTime() - now.getTime()) / 60_000));
-  const estimatedWaitMinutes = timeUntilSlotStart + (peopleAhead * appointment.department.avgConsultMinutes);
+  const prevSlotStartTime = slotStartTime.getHours() <= 8
+    ? slotStartTime
+    : new Date(slotStartTime.getTime() - 60 * 60 * 1000);
+
+  const queueStarted = now >= prevSlotStartTime || nowServing !== null;
+
+  let estimatedWaitMinutes: number | null = null;
+  if (queueStarted) {
+    const timeUntilSlotStart = Math.max(0, Math.floor((slotStartTime.getTime() - now.getTime()) / 60_000));
+    estimatedWaitMinutes = timeUntilSlotStart + (peopleAhead * appointment.department.avgConsultMinutes);
+  }
 
   return {
     appointmentId: appointment.id,
@@ -318,7 +356,56 @@ export async function getQueueStatus(appointmentId: string): Promise<QueueStatus
     nowServing,
     departmentId: appointment.departmentId,
     departmentName: appointment.department.name,
+    scheduledFor: appointment.scheduledFor.toISOString(),
   };
+}
+
+const sentQueueAlerts = new Set<string>();
+
+export function markQueueAlertSent(appointmentId: string): void {
+  sentQueueAlerts.add(appointmentId);
+}
+
+export async function checkAndTriggerQueueAlert(appointmentId: string): Promise<void> {
+  if (sentQueueAlerts.has(appointmentId)) return;
+
+  try {
+    const appt = await prisma.appointment.findUnique({
+      where: { id: appointmentId },
+      include: {
+        patient: { select: { name: true, phone: true } },
+        hospital: { select: { name: true } },
+        department: { select: { name: true } },
+      },
+    });
+
+    if (!appt || appt.status !== "CONFIRMED" || appt.receiveSms === false) return;
+
+    const bucket = {
+      hospitalId: appt.hospitalId,
+      departmentId: appt.departmentId,
+      scheduledDay: appt.scheduledDay,
+    };
+
+    const peopleAhead = await countPeopleAhead(bucket, {
+      scheduledFor: appt.scheduledFor,
+      queueNumber: appt.queueNumber,
+    });
+
+    if (peopleAhead === 1) {
+      sentQueueAlerts.add(appointmentId);
+      await SmsService.sendQueueAlertSms({
+        patientName: appt.patient.name,
+        patientPhone: appt.patient.phone,
+        hospitalName: appt.hospital.name,
+        departmentName: appt.department.name,
+        queueNumber: appt.queueNumber,
+        receiveSms: appt.receiveSms,
+      });
+    }
+  } catch (err) {
+    logger.warn("Error in checkAndTriggerQueueAlert", { err });
+  }
 }
 
 /* ------------------------------------------------------------ department */
@@ -386,12 +473,52 @@ export async function callNext(departmentId: string, doctorId: string): Promise<
     scheduledDay: day,
   };
 
-  const { completed, promoted } = await prisma.$transaction(async (tx) => {
-    const current = await tx.appointment.findFirst({
-      where: { ...bucket, status: "IN_PROGRESS" },
-      orderBy: [{ scheduledFor: "asc" }, { queueNumber: "asc" }],
-    });
+  const now = new Date();
+  const slotStart = new Date(now);
+  slotStart.setMinutes(0, 0, 0);
+  const slotEnd = new Date(slotStart.getTime() + 60 * 60 * 1000);
 
+  const formatHour = (h: number) => {
+    const ampm = h >= 12 ? "PM" : "AM";
+    const h12 = h % 12 === 0 ? 12 : h % 12;
+    return `${h12}:00 ${ampm}`;
+  };
+  const slotLabel = `${formatHour(slotStart.getHours())} – ${formatHour(slotEnd.getHours())}`;
+
+  // Find any active IN_PROGRESS appointment to finish
+  const current = await prisma.appointment.findFirst({
+    where: { ...bucket, status: "IN_PROGRESS" },
+    orderBy: [{ scheduledFor: "asc" }, { queueNumber: "asc" }],
+  });
+
+  // Find appointments in current time slot window on today's date
+  const slotAppointments = await prisma.appointment.findMany({
+    where: {
+      ...bucket,
+      scheduledFor: {
+        gte: slotStart,
+        lt: slotEnd,
+      },
+      status: { in: ["PENDING", "CONFIRMED"] },
+    },
+    orderBy: [{ queueNumber: "asc" }],
+  });
+
+  const nextConfirmed = slotAppointments.find((a) => a.status === "CONFIRMED");
+  const hasPendingInSlot = slotAppointments.some((a) => a.status === "PENDING");
+
+  if (!nextConfirmed) {
+    if (hasPendingInSlot) {
+      throw ApiError.badRequest(
+        "Cannot call patient because appointment status is pending confirmation. Please confirm the booking first.",
+      );
+    }
+    throw ApiError.badRequest(
+      `No confirmed patient found to call for the current time slot (${slotLabel}).`,
+    );
+  }
+
+  const { completed, promoted } = await prisma.$transaction(async (tx) => {
     const finished = current
       ? await tx.appointment.update({
           where: { id: current.id },
@@ -400,28 +527,55 @@ export async function callNext(departmentId: string, doctorId: string): Promise<
         })
       : null;
 
-    const next = await tx.appointment.findFirst({
-      where: { ...bucket, status: "CONFIRMED" },
-      orderBy: [{ scheduledFor: "asc" }, { queueNumber: "asc" }],
+    const started = await tx.appointment.update({
+      where: { id: nextConfirmed.id },
+      data: {
+        status: "IN_PROGRESS",
+        startedAt: new Date(),
+        ...(nextConfirmed.doctorId ? {} : { doctorId }),
+      },
+      include: appointmentInclude,
     });
-
-    const started = next
-      ? await tx.appointment.update({
-          where: { id: next.id },
-          data: {
-            status: "IN_PROGRESS",
-            startedAt: new Date(),
-            ...(next.doctorId ? {} : { doctorId }),
-          },
-          include: appointmentInclude,
-        })
-      : null;
 
     return { completed: finished, promoted: started };
   });
 
-  if (completed) publishAppointmentChange(completed, "status");
+  if (completed) {
+    publishAppointmentChange(completed, "status");
+    SmsService.sendAppointmentCompletedSms({
+      patientName: completed.patient.name,
+      patientPhone: completed.patient.phone,
+      hospitalName: completed.hospital.name,
+      doctorName: completed.doctor?.name,
+      receiveSms: completed.receiveSms,
+    }).catch((err) => logger.warn("Failed to send completed SMS", { err }));
+  }
   if (promoted) publishAppointmentChange(promoted, "status");
+
+  // Asynchronously check if any waiting patient now has 1 person ahead
+  (async () => {
+    try {
+      const waitingList = await prisma.appointment.findMany({
+        where: {
+          hospitalId: bucket.hospitalId,
+          departmentId: bucket.departmentId,
+          scheduledDay: bucket.scheduledDay,
+          status: "CONFIRMED",
+        },
+        include: {
+          patient: { select: { name: true, phone: true } },
+          hospital: { select: { name: true } },
+          department: { select: { name: true } },
+        },
+      });
+
+      for (const appt of waitingList) {
+        await checkAndTriggerQueueAlert(appt.id);
+      }
+    } catch (err) {
+      logger.warn("Error checking 1-person-ahead queue alerts", { err });
+    }
+  })();
 
   return {
     completed: completed ? toAppointment(completed) : null,

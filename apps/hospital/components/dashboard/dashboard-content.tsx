@@ -14,8 +14,10 @@ import {
 import { PageHeader } from "@upchaar/ui/page-header";
 
 import { api } from "@/lib/api";
+import { useHospital } from "@/components/session-provider";
 
 export function DashboardContent() {
+  const { data: hospital } = useHospital();
   const statsQuery = useQuery({
     queryKey: ["dashboard", "stats"],
     queryFn: () => api.hospital.stats(),
@@ -30,7 +32,12 @@ export function DashboardContent() {
         description="Overview of your hospital operations"
       />
 
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-5">
+        <StatCard
+          label="Hospital Rating"
+          value={`★ ${(hospital?.rating ?? 4.0).toFixed(1)}`}
+          unit="out of 5.0 stars"
+        />
         <StatCard
           label="Appointments Today"
           value={stats?.appointmentsToday ?? 0}

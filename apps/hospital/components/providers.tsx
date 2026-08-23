@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { LanguageProvider } from "@upchaar/ui/language-provider";
 import { ThemeProvider } from "@upchaar/ui/theme-provider";
 import { Toaster } from "@upchaar/ui/sonner";
 
@@ -32,10 +33,12 @@ export function Providers({ token, children }: ProvidersProps) {
 
   return (
     <ThemeProvider>
-      <QueryClientProvider client={queryClient}>
-        <SessionProvider token={token}>{children}</SessionProvider>
-        <Toaster />
-      </QueryClientProvider>
+      <LanguageProvider>
+        <QueryClientProvider client={queryClient}>
+          <SessionProvider token={token}>{children}</SessionProvider>
+          <Toaster />
+        </QueryClientProvider>
+      </LanguageProvider>
     </ThemeProvider>
   );
 }

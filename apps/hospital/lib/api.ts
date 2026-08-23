@@ -28,6 +28,8 @@ import type {
   MedicineInput,
   MedicineUpdateInput,
   Paginated,
+  PatientRecord,
+  Referral,
   Role,
 } from "@upchaar/types";
 
@@ -354,6 +356,17 @@ export const api = {
       apiRequest<Medicine>(`/inventory/${id}`, { method: "PATCH", body: input }),
 
     remove: (id: string) => apiRequest<null>(`/inventory/${id}`, { method: "DELETE" }),
+  },
+
+  referrals: {
+    list: () => apiRequest<Referral[]>("/referrals"),
+    connect: (id: string, body?: { doctorId?: string }) =>
+      apiRequest<Referral>(`/referrals/${id}/connect`, { method: "POST", body: body ?? {} }),
+  },
+
+  records: {
+    patientRecord: (id: string) =>
+      apiRequest<PatientRecord>(`/records/patient/${id}`),
   },
 } as const;
 
