@@ -400,6 +400,7 @@ export async function checkAndTriggerQueueAlert(appointmentId: string): Promise<
         hospitalName: appt.hospital.name,
         departmentName: appt.department.name,
         queueNumber: appt.queueNumber,
+        peopleAhead,
         receiveSms: appt.receiveSms,
       });
     }
