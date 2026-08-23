@@ -1,139 +1,140 @@
-# Upchaar
+# Upchaar-UDHE (Unified Digital Healthcare Ecosystem)
 
-A hospital, doctor and patient platform: patients discover hospitals and book
-appointments, doctors run a live consultation queue, and hospital admins manage
-departments, staff, beds and medicine inventory.
+**Upchaar-UDHE (Unified Digital Healthcare Ecosystem): An AI-Enabled Real-Time Platform for Intelligent Healthcare Coordination, Resource Availability, and Inter-Hospital Connectivity**
 
-Built as a Turborepo monorepo — TypeScript end to end, one shared API contract,
-one shared design system.
+Upchaar-UDHE connects patients, doctors, and hospital administrators in a unified, real-time healthcare ecosystem. Patients discover hospitals, book time-slotted appointments, and monitor their live queue position; doctors run a real-time consultation console; and hospital admins manage departments, doctor rosters, bed allocations, inter-hospital referrals, and medicine inventory.
+
+---
+
+## 🚀 Key Features & Capabilities
+
+### 🌐 1. Bilingual System (English + Hindi 🌐 EN | हिंदी)
+- **1-Click Language Switcher**: Seamless `🌐 EN | हिंदी` toggle in the top header navbar across all 3 portals.
+- **Native Devanagari Translations**: Complete UI translations for navigation items, queue metrics (*"आपसे आगे मरीज"*, *"अनुमानित प्रतीक्षा"*, *"आपकी बारी है"*), dashboard greetings, and status badges.
+- **Persistent Preference**: Remembers the user's language selection in `localStorage`.
+
+### 📲 2. Automated Multi-Provider SMS Engine
+- **Dual-Provider Architecture**: Supports **Jio SIM Android Gateway** (`SMS_PROVIDER=jio`) and **Twilio** (`SMS_PROVIDER=twilio`) with zero-downtime automatic failover (`SMS_PROVIDER=auto`) and offline developer console logging (`SMS_PROVIDER=console`).
+- **Smart Queue & Slot SMS Triggers**:
+  - **Booking Request**: Includes booked time slot & date (*"Hi Rajesh, your appointment request at Apollo City Hospital (Orthopaedics) for Sun, 23 Aug 2026 at 5:00 PM is received. Token #2"*).
+  - **Custom Token #2 Confirmation**: Special confirmation text when 1 person is ahead (*"CONFIRMED. Token #2. Only 1 patient is ahead of you, so we hope you will come on time."*).
+  - **1-Person-Ahead Urgent Alert**: Notifies waiting patients (*"ALERT: There is only 1 patient ahead of you... Please come near the consultation room as soon as possible"*).
+  - **Consultation Complete & Feedback**: Clean doctor name formatting (*"with Dr. Rohan Mehta"*) inviting patient ratings.
+- **Dynamic Mobile Redirection**: Patients can update their phone number on `/records`, instantly redirecting all future SMS alerts to the newly updated number.
+
+### ⏱️ 3. Real-Time Live Queue (SSE Driven)
+- **Server-Sent Events (SSE)**: Live queue position updates without manual page refreshes.
+- **Zero-Redis Queue Engine**: Position is derived dynamically via PostgreSQL transactions to prevent collisions.
+- **Calculated Wait Times**: Live estimated wait times based on average consultation durations and slot windows.
+
+### ⭐️ 4. Mandatory Rating & Feedback System
+- **Doctor Rating Badge**: Displays average star ratings directly beside doctor names on hospital dashboards.
+- **Rating Enforcer**: Prompts patients to rate their previous consultation before booking a new appointment.
+
+### 🤖 5. AI-Enabled Care Modules (Gemini AI)
+- **Dr. Positive**: Intelligent AI health assistant providing calm, guided answers.
+- **Medicine Interaction Checker**: Evaluates potential drug-drug interactions before prescription/use.
+
+### 🏥 6. Hospital Admin & Inter-Hospital Referrals
+- **Doctor Provisioning**: Auto-generates secure temporary passwords for new doctors with mandatory first-login password updates.
+- **Inter-Hospital Referrals**: Track incoming and outgoing patient transfers between hospitals.
+- **Bed & Resource Management**: Live bed capacity tracking (ICU, Ventilator, General ward) and inventory stock control.
+
+---
+
+## 🏗️ Monorepo Structure
+
+Built as a high-performance Turborepo monorepo with 100% type safety and a unified design system:
 
 ```
 apps/
-  api/        Express 5 + Prisma + Postgres        :4000
-  patient/    Next.js 15                           :3000
-  doctor/     Next.js 15                           :3001
-  hospital/   Next.js 15                           :3002
+  api/        Express 5 + Prisma 6 + PostgreSQL       :4000
+  patient/    Next.js 15 (Patient Portal)             :3000
+  doctor/     Next.js 15 (Doctor Console)             :3001
+  hospital/   Next.js 15 (Hospital Admin Dashboard)   :3002
 packages/
   db/         Prisma schema, client, demo seed
-  types/      Zod schemas — the shared API contract
-  ui/         shadcn/ui components + Tailwind v4 theme
+  types/      Zod schemas — shared API contract
+  ui/         Shadcn UI + Tailwind CSS v4 + i18n components
   typescript-config/
-docs/         Architecture, features, API contract, progress tracker
+docs/         Architecture, API contract, progress tracker
 ```
 
 ---
 
-## Quick start — Docker (everything, one command)
+## 🐳 Quick Start — Docker (Full Stack)
 
 ```bash
-cp .env.example .env       # then edit JWT_SECRET (and GEMINI_API_KEY if you want AI)
+cp .env.example .env       # Edit JWT_SECRET and SMS_PROVIDER settings
 docker compose up -d --build
 ```
 
-Compose brings up Postgres, runs a one-shot `migrate` service that pushes the
-schema and seeds demo data, then starts the API and all three frontends.
+Compose brings up PostgreSQL, runs schema migrations and seed data, then starts the API and all frontends.
 
-| App | URL |
+| Service | Local URL |
 |---|---|
-| Patient | http://localhost:3000 |
-| Doctor | http://localhost:3001 |
-| Hospital admin | http://localhost:3002 |
-| API | http://localhost:4000/api/v1 |
-| Health | http://localhost:4000/health |
+| **Patient Portal** | http://localhost:3000 |
+| **Doctor Console** | http://localhost:3001 |
+| **Hospital Admin Dashboard** | http://localhost:3002 |
+| **API Endpoint** | http://localhost:4000/api/v1 |
+| **Health Check** | http://localhost:4000/health |
 
-```bash
-docker compose logs -f     # follow
-docker compose down        # stop
-docker compose down -v     # stop and wipe the database
-```
+---
 
-## Quick start — local development
+## 💻 Quick Start — Local Development
 
-Requires Node >= 20, pnpm 11, and a Postgres you can reach.
+### Requirements:
+- Node.js >= 20
+- pnpm >= 9
+- PostgreSQL instance
 
 ```bash
 cp .env.example .env
 pnpm install
-docker compose up -d postgres      # or point DATABASE_URL at your own
 pnpm db:push
 pnpm db:seed
-pnpm dev                           # all four apps via Turborepo
+pnpm dev
 ```
-
-Run one app on its own with `pnpm --filter @upchaar/patient dev`.
 
 ---
 
-## Demo credentials
-
-All seeded accounts:
+## 🔑 Demo Credentials
 
 | Role | Email | Password |
 |---|---|---|
-| Patient | `mradul@example.com` | `Password123!` |
-| Hospital admin | `admin@apollocity.in` | `Password123!` |
-| Doctor | `aarti.deshmukh@apollocity.in` | `Doctor123!` |
+| **Patient** | `mradul@example.com` | `Password123!` |
+| **Hospital Admin** | `admin@apollocity.in` | `Password123!` |
+| **Doctor** | `aarti.deshmukh@apollocity.in` | `Doctor123!` |
 
-Other seeded patients (`sneha@`, `rajesh@`, `fatima@`, `arjun@` `@example.com`)
-share the patient password. Other hospitals: `admin@sunrisemed.in`,
-`admin@greenfieldcare.in`.
-
-### Demoing the live queue
-
-The headline feature is the real-time queue. Apollo City Hospital → Cardiology
-is seeded with one patient in progress and three waiting.
-
-1. Sign in to the **doctor** app as Dr. Aarti Deshmukh → queue console.
-2. Sign in to the **patient** app as Mradul Tiwari (queue position #2) in
-   another window → his live queue screen.
-3. Hit **Call next** in the doctor app. The patient's position updates
-   immediately over SSE — no refresh.
-
-> **Re-seed on the day you demo.** The queue is scoped to *today*, and the seed
-> pins appointments to the date it was run. If the console looks empty, the data
-> is simply yesterday's — run `pnpm db:seed` again. The seed is idempotent.
+*(Other seeded patients: `sneha@example.com`, `rajesh@example.com`, `fatima@example.com` with password `Password123!`).*
 
 ---
 
-## Commands
+## ⚙️ Environment Configuration
 
-| Command | Does |
+See `.env.example` for details:
+
+| Variable | Description |
 |---|---|
-| `pnpm dev` | every app in watch mode |
-| `pnpm build` | build everything |
-| `pnpm typecheck` | `tsc --noEmit` across the monorepo |
-| `pnpm db:push` | sync the Prisma schema |
-| `pnpm db:seed` | reset and reload demo data |
-| `pnpm db:studio` | Prisma Studio |
-| `pnpm docker:up` / `docker:down` | full stack in containers |
+| `DATABASE_URL` | PostgreSQL connection string |
+| `JWT_SECRET` | Secret key for signing JWT tokens |
+| `SMS_PROVIDER` | Options: `console` (terminal logs), `jio` (SIM Gateway), `twilio` (Twilio API), `auto` (Failover) |
+| `JIO_GATEWAY_URL` | Endpoint for Jio SIM Android Gateway |
+| `JIO_GATEWAY_TOKEN` | Auth token for Jio SIM Gateway |
+| `TWILIO_ACCOUNT_SID` | Twilio Account SID |
+| `TWILIO_AUTH_TOKEN` | Twilio Auth Token |
+| `TWILIO_PHONE_NUMBER` | Twilio Virtual Number / Header |
+| `GEMINI_API_KEY` | Gemini AI API key for Dr. Positive & Medicine Check |
 
-## Environment
+---
 
-See `.env.example`. The essentials:
+## 🛠️ CLI Commands
 
-| Var | Notes |
+| Command | Action |
 |---|---|
-| `DATABASE_URL` | Postgres connection string |
-| `JWT_SECRET` | **change this** — long random string |
-| `GEMINI_API_KEY` | optional; without it the two `/ai` routes answer `503` and everything else works normally |
-| `NEXT_PUBLIC_API_URL` | API base URL used by the browser |
-| `API_URL` | API base URL used server-side (docker-internal) |
-
-## Architecture notes
-
-- **One contract, no drift.** Every request and response shape is a Zod schema in
-  `packages/types`. The API validates with them; the frontends import them. The
-  two sides cannot disagree.
-- **The queue has no Redis.** Position is derived, not stored: `queueNumber` is
-  allocated inside a transaction (unique per hospital + department + day), and
-  position is a count of lower-numbered `CONFIRMED`/`IN_PROGRESS` rows.
-  Cancellations and completions advance the queue with no mutation at all.
-- **Realtime is SSE**, not WebSockets — no extra service, and it survives a
-  container restart by reconnecting.
-- **Doctors are provisioned, not self-registered.** A hospital creates the
-  account and receives a temporary password once; the doctor is forced to change
-  it on first login.
-
-Deeper detail lives in [`docs/`](./docs) — `ARCHITECTURE.md` (decisions),
-`API_CONTRACT.md` (every endpoint), `FEATURES.md` (scope), `PROGRESS.md`
-(build log and open items).
+| `pnpm dev` | Run all applications in dev watch mode |
+| `pnpm build` | Build all packages and apps for production |
+| `pnpm typecheck` | Run `tsc --noEmit` across all 8 monorepo packages |
+| `pnpm db:push` | Sync Prisma schema to PostgreSQL database |
+| `pnpm db:seed` | Reset and populate demo seed data |
+| `pnpm db:studio` | Open Prisma Studio GUI |
