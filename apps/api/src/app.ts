@@ -29,8 +29,13 @@ export function createApp(): Express {
   app.use(
     cors({
       origin(origin, callback) {
-        // Same-origin, curl and server-to-server calls send no Origin header.
-        if (!origin || env.corsOrigins.includes(origin)) {
+        // Allow no origin (curl/server calls), explicit corsOrigins, wildcard *, or any *.vercel.app domain
+        if (
+          !origin ||
+          env.corsOrigins.includes("*") ||
+          env.corsOrigins.includes(origin) ||
+          origin.endsWith(".vercel.app")
+        ) {
           callback(null, true);
           return;
         }
