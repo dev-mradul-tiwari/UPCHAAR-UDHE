@@ -48,10 +48,12 @@ Built as a high-performance Turborepo monorepo with 100% type safety and a unifi
 
 ```
 apps/
-  api/        Express 5 + Prisma 6 + PostgreSQL       :4000
-  patient/    Next.js 15 (Patient Portal)             :3000
-  doctor/     Next.js 15 (Doctor Console)             :3001
-  hospital/   Next.js 15 (Hospital Admin Dashboard)   :3002
+  api/            Express 5 + Prisma 6 + PostgreSQL          :4000
+  landing/        Next.js 16 (Landing Page / Portal Hub)     :3004
+  patient/        Next.js 15 (Patient Portal)                :3000
+  doctor/         Next.js 15 (Doctor Console)                :3001
+  hospital/       Next.js 15 (Hospital Admin Dashboard)      :3002
+  health-worker/  Next.js 15 (ASHA Health Worker Portal)     :3003
 packages/
   db/         Prisma schema, client, demo seed
   types/      Zod schemas — shared API contract
@@ -73,9 +75,11 @@ Compose brings up PostgreSQL, runs schema migrations and seed data, then starts 
 
 | Service | Local URL |
 |---|---|
+| **Landing Page (Portal Hub)** | http://localhost:3004 |
 | **Patient Portal** | http://localhost:3000 |
 | **Doctor Console** | http://localhost:3001 |
 | **Hospital Admin Dashboard** | http://localhost:3002 |
+| **Health Worker Portal (ASHA)** | http://localhost:3003 |
 | **API Endpoint** | http://localhost:4000/api/v1 |
 | **Health Check** | http://localhost:4000/health |
 
@@ -100,11 +104,12 @@ pnpm dev
 
 ## 🔑 Demo Credentials
 
-| Role | Email | Password |
+| Role | Email / Phone | Password |
 |---|---|---|
 | **Patient** | `mradul@example.com` | `Password123!` |
 | **Hospital Admin** | `admin@apollocity.in` | `Password123!` |
 | **Doctor** | `aarti.deshmukh@apollocity.in` | `Doctor123!` |
+| **Health Worker (ASHA)** | Phone: `9876543210` | `Worker123!` |
 
 *(Other seeded patients: `sneha@example.com`, `rajesh@example.com`, `fatima@example.com` with password `Password123!`).*
 
