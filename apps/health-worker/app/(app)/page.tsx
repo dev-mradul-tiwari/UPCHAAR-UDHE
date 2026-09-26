@@ -18,7 +18,7 @@ export default async function DashboardPage() {
     select: { patientId: true },
   });
   
-  const patientIds = assignments.map(a => a.patientId);
+  const patientIds = assignments.map((a: { patientId: string }) => a.patientId);
   const patientCount = patientIds.length;
 
   // Get high risk cases
