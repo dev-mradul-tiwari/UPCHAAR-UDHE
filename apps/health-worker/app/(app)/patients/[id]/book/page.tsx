@@ -1,21 +1,39 @@
-import { prisma } from "@upchaar/db";
-import { bookAppointmentOnBehalf } from "../../../../actions/appointment";
 import Link from "next/link";
+import { apiRequest } from "@/lib/api";
 import { BookForm } from "./BookForm";
+import type { HospitalSummary, Paginated } from "@upchaar/types";
+
+type HospitalWithDepts = {
+  id: string;
+  name: string;
+  departments: { id: string; name: string }[];
+};
+
 export default async function BookPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id: patientId } = await params;
-  
-  // Fetch available hospitals and departments for the form
-  const hospitals = await prisma.hospital.findMany({
-    include: { departments: true }
-  });
 
-  // For simplicity in a single-page form, we'll just flatten them or use simple selects
-  // In a real app, this would use client-side React to filter departments by hospital
+  // Fetch hospitals and all departments in parallel via the public API
+  const [hospitalsResult, departmentsResult] = await Promise.all([
+    apiRequest<Paginated<HospitalSummary>>("/hospitals", { query: { limit: 100 }, anonymous: true }),
+    apiRequest<{ id: string; name: string; hospitalId: string }[]>("/departments", { anonymous: true }),
+  ]);
+
+  // Group departments by hospitalId and merge with hospitals
+  const deptsByHospital = new Map<string, { id: string; name: string }[]>();
+  for (const dept of departmentsResult) {
+    if (!deptsByHospital.has(dept.hospitalId)) deptsByHospital.set(dept.hospitalId, []);
+    deptsByHospital.get(dept.hospitalId)!.push({ id: dept.id, name: dept.name });
+  }
+
+  const hospitals: HospitalWithDepts[] = hospitalsResult.items.map((h) => ({
+    id: h.id,
+    name: h.name,
+    departments: deptsByHospital.get(h.id) ?? [],
+  }));
 
   return (
     <div className="p-4 max-w-md mx-auto w-full">

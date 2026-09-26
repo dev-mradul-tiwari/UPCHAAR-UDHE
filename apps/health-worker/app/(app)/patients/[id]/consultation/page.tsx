@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@upch
 import { Button } from "@upchaar/ui/button";
 import { Camera, UploadCloud } from "lucide-react";
 import { VideoClient } from "./VideoClient";
-import { AccessToken } from "livekit-server-sdk";
+
 import jwt from "jsonwebtoken";
 
 

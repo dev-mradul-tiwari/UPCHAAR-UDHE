@@ -1,0 +1,69 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "landing": {
+      "root": "apps/landing"
+    },
+    "patient": {
+      "root": "apps/patient"
+    },
+    "doctor": {
+      "root": "apps/doctor"
+    },
+    "health_worker": {
+      "root": "apps/health-worker"
+    },
+    "hospital": {
+      "root": "apps/hospital"
+    },
+    "api": {
+      "root": "apps/api"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/v1/:path*",
+      "destination": { "service": "api" }
+    },
+    {
+      "source": "/health",
+      "destination": { "service": "api" }
+    },
+    {
+      "source": "/patient/:path*",
+      "destination": { "service": "patient" }
+    },
+    {
+      "source": "/patient",
+      "destination": { "service": "patient" }
+    },
+    {
+      "source": "/doctor/:path*",
+      "destination": { "service": "doctor" }
+    },
+    {
+      "source": "/doctor",
+      "destination": { "service": "doctor" }
+    },
+    {
+      "source": "/health-worker/:path*",
+      "destination": { "service": "health_worker" }
+    },
+    {
+      "source": "/health-worker",
+      "destination": { "service": "health_worker" }
+    },
+    {
+      "source": "/hospital-admin/:path*",
+      "destination": { "service": "hospital" }
+    },
+    {
+      "source": "/hospital-admin",
+      "destination": { "service": "hospital" }
+    },
+    {
+      "source": "/:path*",
+      "destination": { "service": "landing" }
+    }
+  ]
+}

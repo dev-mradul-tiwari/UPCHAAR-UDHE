@@ -25,7 +25,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         Upchaar keeps your health information private and encrypted in transit.
       </footer>
 
-      <div className="fixed bottom-4 left-4 z-50 rounded-xl border border-border bg-card p-4 shadow-2xl text-sm">
+      <div className="fixed bottom-4 right-4 z-50 rounded-xl border border-border bg-card p-4 shadow-2xl text-sm">
         <h4 className="font-semibold mb-2 text-foreground flex items-center gap-2">
           <span className="flex h-2 w-2 rounded-full bg-blue-500"></span>
           Demo Credentials

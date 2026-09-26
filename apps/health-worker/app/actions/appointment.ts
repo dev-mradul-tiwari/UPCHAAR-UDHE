@@ -21,8 +21,9 @@ export async function bookAppointmentOnBehalf(formData: FormData) {
     { subject: patientId, expiresIn: "1h" }
   );
 
+  const apiBase = (process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api/v1").replace(/\/+$/, "");
   // 2. Call the existing Appointment API
-  const res = await fetch("http://localhost:4000/api/v1/appointments", {
+  const res = await fetch(`${apiBase}/appointments`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
