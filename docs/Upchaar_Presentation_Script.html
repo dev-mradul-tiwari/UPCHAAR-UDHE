@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  @page { margin: 2cm; size: A4; }
+  body { font-family: 'Calibri', 'Segoe UI', Arial, sans-serif; font-size: 13px; line-height: 1.6; color: #1a1a1a; max-width: 700px; margin: 0 auto; padding: 20px; }
+  h1 { font-size: 22px; color: #0F172A; border-bottom: 3px solid #0F172A; padding-bottom: 8px; margin-top: 30px; }
+  h2 { font-size: 18px; color: #1E3A5F; border-bottom: 2px solid #1E3A5F; padding-bottom: 6px; margin-top: 28px; page-break-before: auto; }
+  h3 { font-size: 15px; color: #333; margin-top: 20px; }
+  p { margin: 8px 0; text-align: justify; }
+  strong { color: #0F172A; }
+  em { color: #555; }
+  hr { border: none; border-top: 1px solid #ddd; margin: 20px 0; }
+  blockquote { border-left: 4px solid #1E3A5F; margin: 10px 0; padding: 8px 16px; background: #f8f9fa; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 12px; }
+  th { background: #1E3A5F; color: white; padding: 8px 10px; text-align: left; }
+  td { padding: 6px 10px; border: 1px solid #ddd; }
+  tr:nth-child(even) { background: #f5f5f5; }
+  code { background: #f0f0f0; padding: 2px 5px; border-radius: 3px; font-size: 12px; }
+  .page-break { page-break-before: always; }
+</style>
+</head>
+<body>
+<h1>UPCHAAR — SIH 2026 Presentation Script</h1>
+<h3>Team TechX | Problem Statement ID: 26198</h3>
+<hr>
+<h2>SLIDE 1 — INTRODUCTION (30–40 seconds)</h2>
+<p><strong>Speaker:</strong></p>
+<p>"Good morning / Good afternoon respected judges and mentors.</p>
+<p>We are Team TechX, and we are here to present our solution for Problem Statement ID 26198.</p>
+<p>Our project is called <strong>Upchaar</strong> — which stands for Unified Digital Healthcare Ecosystem.</p>
+<p>It is an AI-enabled, real-time platform designed for intelligent healthcare coordination, resource availability tracking, and inter-hospital connectivity.</p>
+<p>This project falls under the <strong>MedTech / BioTech / HealthTech</strong> theme, and it is a <strong>software-based</strong> solution.</p>
+<p>Let me walk you through the problem we are solving and how Upchaar addresses it."</p>
+<hr>
+<h2>SLIDE 2 — ADDRESSING THE PROBLEM & PROPOSED SOLUTION (90–120 seconds)</h2>
+<p><strong>Speaker:</strong></p>
+<p>"Before we talk about our solution, let us first understand the problem.</p>
+<p><strong>The Problem:</strong></p>
+<p>In India today, patients visiting government and private hospitals face <strong>3 to 5 hours of blind waiting</strong> in overcrowded OPD queues. There is no live tracking — patients have no idea when their turn will come.</p>
+<p>There is <strong>zero real-time visibility</strong> into which doctors are available, how long the queue is, or whether beds are free in nearby hospitals.</p>
+<p>Hospitals operate in <strong>complete isolation</strong> from each other. If a patient needs an emergency blood transfusion or an ICU bed that is not available in one hospital, there is no system to check availability in nearby hospitals in real time.</p>
+<p>And on top of all this, <strong>paper-based referral systems</strong> cause dangerous delays when patients need to be transferred between hospitals during emergencies.</p>
+<p><strong>Our Proposed Solution — Upchaar:</strong></p>
+<p>Upchaar solves all of these problems through a <strong>unified multi-role workspace</strong>. We have built synchronized, access-controlled portals for three types of users — <strong>Patients, Doctors, and Hospital Administrators</strong> — all powered by a single backend.</p>
+<p>The core feature of Upchaar is our <strong>Real-Time Live OPD Queue</strong>. It uses a technology called Server-Sent Events, or SSE, to push live updates directly to the patient's screen — showing their exact queue position, how many people are ahead, and the estimated wait time. This updates in real time without the patient needing to refresh their page.</p>
+<p>We also have a <strong>Smart Hospital Resource Console</strong> that gives hospital admins a live dashboard showing ICU, general, and premium bed counts, along with automated alerts when pharmacy stock is running low or medicines are about to expire.</p>
+<p>For AI-powered features, we have integrated <strong>Dr. Positive</strong>, which is a Gemini AI-based pre and post-operative counselor that patients can chat with. We also have a <strong>Drug Interaction Checker</strong> where patients can enter two or more medicines and get an AI-generated safety report.</p>
+<p>We are currently working on integrating the <strong>ABHA Digital Health Stack</strong> — this will connect Upchaar with the national Ayushman Bharat Digital Mission for unified, interoperable patient health IDs across hospitals.</p>
+<p>We are also building an <strong>Emergency Cross-Hospital Grid</strong> — a network that will enable real-time blood bank tracking across hospitals, seamless EHR-based patient referrals, and inter-hospital medicine inventory sharing.</p>
+<p><strong>What makes Upchaar unique?</strong></p>
+<p>Our innovation lies in six key areas:</p>
+<p>First, our <strong>Zero-Redis Live Queue</strong> — we use a lightweight SSE architecture that delivers sub-second queue updates without needing expensive infrastructure like Redis or WebSocket servers.</p>
+<p>Second, the <strong>Cross-Hospital Grid</strong> — which we are building as a first-of-its-kind inter-hospital emergency resource network.</p>
+<p>Third, <strong>Guardrailed Clinical AI</strong> — our AI assistant is designed with strict safety boundaries. It never gives autonomous medical diagnoses — it always advises patients to consult their doctor.</p>
+<p>Fourth, <strong>Offline SMS Fallback</strong> — we are implementing a GSM-based SMS alert system so that patients in rural areas with poor internet can still receive their queue updates via text message. For this, we are using a Jio SIM-based Android gateway approach.</p>
+<p>Fifth, <strong>ABHA Digital Health Sync</strong> — for portable, nationwide medical records using the government's digital health ID system.</p>
+<p>And sixth, <strong>Multi-Lingual Support</strong> — we are adding Hindi and regional language support so that patients who are not comfortable with English can also use the platform easily."</p>
+<hr>
+<h2>SLIDE 3 — TECHNICAL APPROACH (90–120 seconds)</h2>
+<p><strong>Speaker:</strong></p>
+<p>"Now let me explain the technical architecture behind Upchaar.</p>
+<p><strong>Frontend:</strong></p>
+<p>We have built three separate web portals — the Patient Portal, the Doctor Console, and the Hospital Admin Dashboard. All three are built using <strong>Next.js version 15</strong> with React and Tailwind CSS. This gives us a fast, responsive, and modern user interface across all devices.</p>
+<p>In the Patient Portal, patients can see their live queue position through SSE, chat with Dr. Positive which is our Gemini AI counselor, check drug interactions, search and filter hospitals by city and department, and rate hospitals after their visit. We are also working on adding a mandatory feedback system and Hindi language support.</p>
+<p>In the Doctor Console, doctors have a one-click 'Call Next' queue management system, they can view the complete medical history of their current patient, toggle their on-duty or off-duty status, and manage their appointments. We are also working on enabling doctors to create patient referrals to other hospitals.</p>
+<p>In the Hospital Admin Dashboard, admins can track bed inventory in real time, monitor medicine stock levels with automated low-stock and expiry alerts, manage departments and doctors, and view performance analytics. We are also building the ability for hospitals to accept incoming patient referrals from other hospitals.</p>
+<p><strong>Backend:</strong></p>
+<p>All three portals connect to a single <strong>Express 5 REST API backend</strong> running on Node.js. This backend is structured inside a <strong>Turborepo monorepo</strong>, which means all our shared code — like database models, TypeScript types, UI components, and configuration — lives in shared packages that every portal can reuse.</p>
+<p>Every API request first passes through <strong>JWT authentication middleware</strong> for security, and then through <strong>Zod schema validation</strong> to make sure the data is correctly formatted before it reaches our business logic.</p>
+<p><strong>The backend connects to four core services:</strong></p>
+<p>First, <strong>PostgreSQL 16</strong> — our primary database, managed through <strong>Prisma ORM</strong> for type-safe database queries.</p>
+<p>Second, the <strong>SSE Real-Time Stream Engine</strong> — this is what powers our live OPD queue tracking. When a doctor clicks 'Call Next', the queue updates are instantly pushed to every connected patient's browser without any page reload.</p>
+<p>Third, <strong>Google Gemini AI API</strong> — this powers our Dr. Positive counselor and the drug interaction checker. It runs entirely via API, so we have zero GPU or model hosting costs.</p>
+<p>And fourth, we are working on a <strong>Jio SIM Android Gateway</strong> for dispatching SMS alerts to patients who do not have internet access.</p>
+<p>The entire system is containerized using <strong>Docker Compose</strong> for easy deployment — with separate containers for the API server, PostgreSQL database, and database migration scripts.</p>
+<p>You can see at the bottom of the slide, our complete technology stack — Next.js 15, React, Tailwind CSS, Node.js, Express.js, Turborepo, PostgreSQL 16, Prisma ORM, Google Gemini AI, and Docker."</p>
+<hr>
+<h2>SLIDE 4 — FEASIBILITY AND VIABILITY (60–90 seconds)</h2>
+<p><strong>Speaker:</strong></p>
+<p>"Now let us talk about the feasibility of our solution and how we plan to handle the key challenges.</p>
+<p><strong>Feasibility:</strong></p>
+<p>Upchaar is built entirely on a production-grade, battle-tested stack — Next.js, Express, PostgreSQL, and Prisma. These are not experimental technologies — they are used by companies like Netflix, Uber, and thousands of healthcare platforms worldwide. Our system is production-ready from day one.</p>
+<p>One single backend powers all three user portals — Patient, Doctor, and Hospital Admin. This drastically reduces code duplication and keeps our system easy to maintain.</p>
+<p>We use SSE for real-time queue updates, which is much lighter than WebSockets and requires no additional infrastructure like Redis. This keeps our server costs extremely low.</p>
+<p>Our Gemini AI integration runs entirely via Google's API — meaning we have zero GPU hosting costs. The AI scales automatically as usage grows.</p>
+<p>The system is designed to be hospital-agnostic — any hospital can be onboarded with zero custom code changes. We simply provision accounts and they are ready to go.</p>
+<p>JWT and Zod together secure and validate every single API request automatically, and our modular Turborepo structure means we can add new features or even entirely new portals quickly and independently.</p>
+<p><strong>Key Challenges and Risks:</strong></p>
+<p>We have identified five major challenges:</p>
+<p>First, handling hundreds of concurrent OPD bookings without data conflicts.</p>
+<p>Second, the risk that patients might mistake AI responses for actual clinical diagnoses.</p>
+<p>Third, doctor resistance to replacing traditional paper-based queue systems with digital ones.</p>
+<p>Fourth, keeping the AI drug interaction data updated as new medicines enter the market.</p>
+<p>And fifth, rural hospitals often face poor internet connectivity, which could make our real-time features unusable.</p>
+<p><strong>Our Mitigations:</strong></p>
+<p>For concurrent bookings, we use optimistic UI rendering combined with server-side queue locking to prevent any data conflicts.</p>
+<p>For AI safety, every single AI response in Upchaar displays a clear 'Consult your doctor' disclaimer — the AI never claims to diagnose.</p>
+<p>For doctor adoption, we have designed a simple, one-click interface specifically for hospital staff who may not be tech-savvy. The 'Call Next' button is literally one click.</p>
+<p>For drug data accuracy, our system sources interaction data from verified medical APIs that update automatically.</p>
+<p>And for rural connectivity, we are implementing SMS fallback alerts using a Jio SIM Android gateway, so patients receive queue updates via text message even when they have no internet at all."</p>
+<hr>
+<h2>SLIDE 5 — IMPACT AND BENEFITS (60–90 seconds)</h2>
+<p><strong>Speaker:</strong></p>
+<p>"Now let us look at the real-world impact of Upchaar across three user groups and three benefit categories.</p>
+<p><strong>Impact on Patients:</strong></p>
+<p>Patients get trusted doctor discovery with hospital search and filtering. They can easily book appointments and track their queue position in real time. They have access to an AI-powered Drug Interaction Checker and Dr. Positive counselor for pre and post-operative guidance. They get better access to healthcare information overall, and through our SMS notification system, even patients without smartphones or internet can stay informed.</p>
+<p><strong>Impact on Doctors:</strong></p>
+<p>Doctors get instant access to a patient's complete Electronic Health Record before the consultation even begins — including allergies, chronic conditions, past surgeries, and current medications. The one-click 'Call Next' console eliminates the chaos of manual token management. Smoother patient pacing reduces clinical burnout during peak OPD hours. And the smart patient referral system we are building will let doctors seamlessly transfer patients to specialists at other hospitals.</p>
+<p><strong>Impact on Hospitals:</strong></p>
+<p>Hospital administrators get smart pharmacy and expiry alerts that prevent medicine wastage. The cross-hospital emergency grid we are developing will give them visibility into blood availability and bed capacity at nearby hospitals. And the real-time bed occupancy console shows live ICU, General, and Premium bed counts at a glance.</p>
+<p><strong>Social Impact:</strong></p>
+<p>Upchaar directly improves healthcare accessibility, strengthens the coordination between patients, doctors, and hospitals, helps patients understand their medicines better, and connects them faster to the right specialist — improving continuity of care.</p>
+<p><strong>Economic Impact:</strong></p>
+<p>The platform significantly reduces administrative workload for hospital staff, optimizes the utilization of existing healthcare resources like beds, doctors, and medicines, eliminates fragmented manual processes, and reduces unnecessary repeat consultations and duplicate tests.</p>
+<p><strong>Environmental Impact:</strong></p>
+<p>By digitizing OPD tokens, appointment records, and medical histories, Upchaar creates a 100% paperless hospital workflow. Our pharmacy inventory tracking minimizes pharmaceutical waste from expired medicines. And by showing patients real-time queue and bed availability, we reduce unnecessary hospital commutes — directly cutting carbon footprint and travel emissions."</p>
+<hr>
+<h2>SLIDE 6 — RESEARCH AND REFERENCES (20–30 seconds)</h2>
+<p><strong>Speaker:</strong></p>
+<p>"Our solution is backed by solid academic research.</p>
+<p>We studied communication gaps in emergency departments from the Journal of Patient Experience, patient service improvement strategies from the Journal of Operations and Supply Chain Management, and healthcare waiting time analysis from IOSR Journals.</p>
+<p>On the references side, we reviewed published work on appointment scheduling challenges, hospital operation room management, outpatient clinic scheduling under demand uncertainty, and hospital bed capacity allocation for emergency and elective patients.</p>
+<p>All of these research papers and references directly informed the design decisions behind Upchaar — from our real-time queue architecture to our bed management and resource allocation algorithms.</p>
+<p>Thank you for your time. We would be happy to answer any questions."</p>
+<hr>
+<h2>CLOSING (10–15 seconds)</h2>
+<p><strong>Speaker:</strong></p>
+<p>"To summarize — Upchaar is a unified, AI-powered, real-time healthcare ecosystem that solves OPD overcrowding, eliminates hospital isolation, and puts the patient at the center of their own healthcare journey.</p>
+<p>Thank you, judges. We are ready for your questions."</p>
+<hr>
+<h3>TIMING SUMMARY</h3>
+<table>
+<tr><th>Slide</th><th>Topic</th><th>Estimated Time</th></tr>
+<tr><td>Slide 1</td><td>Introduction</td><td>30–40 seconds</td></tr>
+<tr><td>Slide 2</td><td>Problem & Solution</td><td>90–120 seconds</td></tr>
+<tr><td>Slide 3</td><td>Technical Approach</td><td>90–120 seconds</td></tr>
+<tr><td>Slide 4</td><td>Feasibility & Viability</td><td>60–90 seconds</td></tr>
+<tr><td>Slide 5</td><td>Impact & Benefits</td><td>60–90 seconds</td></tr>
+<tr><td>Slide 6</td><td>Research & References</td><td>20–30 seconds</td></tr>
+<tr><td>Closing</td><td>Summary</td><td>10–15 seconds</td></tr>
+<tr><td><strong>TOTAL</strong></td><td></td><td><strong>~6 to 8 minutes</strong></td></tr>
+</table>
+<hr>
+<h3>FEATURES STATUS REFERENCE (For Q&A Preparation)</h3>
+<table>
+<tr><th>Feature</th><th>Status</th><th>What to Say if Asked</th></tr>
+<tr><td>Live OPD Queue (SSE)</td><td>✅ Built</td><td>"Fully functional and demo-ready"</td></tr>
+<tr><td>Dr. Positive (Gemini AI)</td><td>✅ Built</td><td>"Fully functional with streamed replies"</td></tr>
+<tr><td>Drug Interaction Checker</td><td>✅ Built</td><td>"Fully functional — enter 2+ medicines"</td></tr>
+<tr><td>Hospital Search & Filter</td><td>✅ Built</td><td>"Search by city, filter by department & beds"</td></tr>
+<tr><td>Bed Management Console</td><td>✅ Built</td><td>"Live ICU, General, Premium bed tracking"</td></tr>
+<tr><td>Medicine Inventory & Alerts</td><td>✅ Built</td><td>"Low-stock and expiry threshold alerts working"</td></tr>
+<tr><td>Doctor Queue Console</td><td>✅ Built</td><td>"One-click Call Next with SSE push"</td></tr>
+<tr><td>JWT Auth + Zod Validation</td><td>✅ Built</td><td>"Every API request is authenticated and validated"</td></tr>
+<tr><td>ABHA Health ID Integration</td><td>🟨 In Progress</td><td>"We are currently integrating with the ABDM sandbox API"</td></tr>
+<tr><td>Cross-Hospital Emergency Grid</td><td>🟨 In Progress</td><td>"Architecture is designed, working on hospital-to-hospital API sync"</td></tr>
+<tr><td>SMS Fallback (Jio Gateway)</td><td>🟨 In Progress</td><td>"We have the GSM gateway prototype ready, testing with Jio SIM"</td></tr>
+<tr><td>Hindi / Multi-Lingual i18n</td><td>🟨 In Progress</td><td>"We are adding Hindi localization using Next.js i18n routing"</td></tr>
+<tr><td>Patient Referral System</td><td>🟨 In Progress</td><td>"Doctor-to-doctor referral flow is being built"</td></tr>
+<tr><td>Mandatory Feedback Rating</td><td>🟨 In Progress</td><td>"Post-consultation feedback form is in development"</td></tr>
+<tr><td>Hospital & Bed Rating</td><td>🟨 In Progress</td><td>"Patient-submitted hospital ratings feature is being added"</td></tr>
+<tr><td>Doctor Performance Analytics</td><td>🟨 In Progress</td><td>"Dashboard KPIs are designed, connecting to real appointment data"</td></tr>
+</table>
+</body></html>

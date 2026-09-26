@@ -186,6 +186,7 @@ export function toAppointment(appointment: AppointmentWithRelations): Appointmen
     id: appointment.id,
     reason: appointment.reason,
     status: appointment.status,
+    type: appointment.type,
     scheduledFor: toIso(appointment.scheduledFor),
     queueNumber: appointment.queueNumber,
     notes: appointment.notes,

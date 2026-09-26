@@ -1,6 +1,7 @@
 import { z } from "zod";
 import {
   AppointmentStatusSchema,
+  AppointmentTypeSchema,
   BedTypeSchema,
   emailSchema,
   idSchema,
@@ -102,6 +103,7 @@ export const bookAppointmentSchema = z.object({
   scheduledFor: z.coerce.date().refine((d) => d.getTime() + 60 * 60 * 1000 > Date.now(), {
     message: "Pick a time slot that has not ended yet",
   }),
+  type: AppointmentTypeSchema.default("IN_PERSON"),
   receiveSms: z.boolean().default(true),
 });
 export type BookAppointmentInput = z.infer<typeof bookAppointmentSchema>;
@@ -130,6 +132,7 @@ export type Appointment = {
   id: string;
   reason: string;
   status: z.infer<typeof AppointmentStatusSchema>;
+  type: z.infer<typeof AppointmentTypeSchema>;
   scheduledFor: string;
   queueNumber: number;
   notes: string | null;
@@ -278,7 +281,7 @@ export type PatientRecord = {
   patient: {
     id: string;
     name: string;
-    email: string;
+    email: string | null;
     phone: string;
     dateOfBirth: string;
     gender: string;

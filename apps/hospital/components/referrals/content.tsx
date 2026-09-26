@@ -363,7 +363,7 @@ export function HospitalReferralsContent() {
               Patient Notified
             </DialogTitle>
             <DialogDescription className="text-center text-sm">
-              The patient <strong className="text-foreground">{selectedReferral?.patientName}</strong> has been notified that your hospital wants to connect regarding their referral from <strong className="text-foreground">Dr. {selectedReferral?.referringDoctorName}</strong>.
+              The patient <strong className="text-foreground">{selectedReferral?.patientName}</strong> has been notified that your hospital wants to connect regarding their referral from <strong className="text-foreground">{selectedReferral?.referringDoctorName?.startsWith("Dr.") ? selectedReferral?.referringDoctorName : `Dr. ${selectedReferral?.referringDoctorName}`}</strong>.
             </DialogDescription>
           </DialogHeader>
 

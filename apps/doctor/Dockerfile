@@ -6,6 +6,7 @@ RUN corepack enable
 # pnpm's deps-status check wants an interactive confirmation with no TTY
 # available in a Docker build; CI=true makes it skip that prompt.
 ENV CI=true
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 WORKDIR /app
 
 # ---------------------------------------------------------------- deps

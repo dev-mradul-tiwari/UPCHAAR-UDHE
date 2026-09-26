@@ -23,6 +23,8 @@ export function createApp(): Express {
       // API only — no HTML is served, and CSP breaks nothing here.
       contentSecurityPolicy: false,
       crossOriginResourcePolicy: { policy: "cross-origin" },
+      // Prevent browser from caching HSTS on localhost and breaking HTTP requests
+      hsts: false,
     }),
   );
 

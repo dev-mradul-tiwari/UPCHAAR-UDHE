@@ -37,6 +37,11 @@ streamRouter.get(
     unsubscribe = bus.onDepartment(departmentId, (event) => {
       void (async () => {
         try {
+          if ((event.reason as string) === "video-request") {
+            stream.send("video.request", { appointmentId: event.appointmentId, patientId: event.patientId });
+            return;
+          }
+
           const appointment = await prisma.appointment.findUnique({
             where: { id: event.appointmentId },
             include: appointmentInclude,

@@ -190,6 +190,7 @@ export async function bookAppointment(
             departmentId: input.departmentId,
             doctorId: input.doctorId ?? null,
             reason: input.reason,
+            type: input.type,
             receiveSms: input.receiveSms !== false,
             scheduledFor,
             scheduledDay,

@@ -25,11 +25,19 @@ const INVALID_CREDENTIALS = "Email or password is incorrect";
 export async function registerPatient(
   input: PatientRegisterInput,
 ): Promise<{ token: string; patient: PatientProfile }> {
-  const existing = await prisma.patient.findUnique({
-    where: { email: input.email },
+  const existingEmail = input.email
+    ? await prisma.patient.findUnique({
+        where: { email: input.email },
+        select: { id: true },
+      })
+    : null;
+  if (existingEmail) throw ApiError.conflict("Email already registered");
+
+  const existingPhone = await prisma.patient.findUnique({
+    where: { phone: input.phone },
     select: { id: true },
   });
-  if (existing) throw ApiError.conflict("Email already registered");
+  if (existingPhone) throw ApiError.conflict("Phone number already registered");
 
   const patient = await prisma.patient.create({
     data: {
@@ -66,7 +74,14 @@ export async function registerPatient(
 export async function loginPatient(
   input: LoginInput,
 ): Promise<{ token: string; patient: PatientProfile }> {
-  const patient = await prisma.patient.findUnique({ where: { email: input.email } });
+  const patient = await prisma.patient.findFirst({
+    where: {
+      OR: [
+        { email: input.email },
+        { phone: input.email },
+      ],
+    },
+  });
   if (!patient || !(await verifyPassword(input.password, patient.passwordHash))) {
     throw ApiError.unauthorized(INVALID_CREDENTIALS);
   }

@@ -1,0 +1,41 @@
+{
+  "name": "@upchaar/health-worker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev -p 3003",
+    "build": "next build",
+    "start": "next start -p 3003",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf .next .turbo node_modules"
+  },
+  "dependencies": {
+    "@livekit/components-react": "^2.9.24",
+    "@livekit/components-styles": "^1.2.0",
+    "@tanstack/react-query": "^5.66.0",
+    "@upchaar/db": "workspace:*",
+    "@upchaar/types": "workspace:*",
+    "@upchaar/ui": "workspace:*",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.3",
+    "livekit-client": "^2.22.3",
+    "livekit-server-sdk": "^2.19.0",
+    "lucide-react": "^1.31.0",
+    "next": "^15.1.6",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^22.10.5",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@upchaar/typescript-config": "workspace:*",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.7.3"
+  }
+}

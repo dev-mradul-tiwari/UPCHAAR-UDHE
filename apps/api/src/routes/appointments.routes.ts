@@ -46,6 +46,41 @@ appointmentsRouter.get("/:id", requireAuth(), async (req, res) => {
   ok(res, "Appointment", await getAppointmentForCaller(auth, id));
 });
 
+import { bus } from "../lib/events.js";
+import { prisma } from "../lib/db.js";
+import { ApiError } from "../utils/api-error.js";
+
+appointmentsRouter.post("/:id/request-video", async (req, res, next) => {
+  try {
+    const id = requiredParam(req, "id");
+
+    // Find the appointment to get the department and hospital
+    const appointment = await prisma.appointment.findUnique({
+      where: { id },
+      select: { id: true, hospitalId: true, departmentId: true, patientId: true, scheduledDay: true }
+    });
+
+    if (!appointment) {
+      throw ApiError.notFound("Appointment not found");
+    }
+
+    // Emit the event to the doctor's queue stream!
+    // We send reason: 'video-request' (which is technically not in the type, but we can cast it)
+    bus.publishAppointmentChanged({
+      appointmentId: appointment.id,
+      hospitalId: appointment.hospitalId,
+      departmentId: appointment.departmentId,
+      patientId: appointment.patientId,
+      scheduledDay: appointment.scheduledDay.toISOString(),
+      reason: "video-request" as any,
+    });
+
+    ok(res, "Video request sent", null);
+  } catch (error) {
+    next(error);
+  }
+});
+
 appointmentsRouter.patch(
   "/:id/status",
   requireAuth("HOSPITAL", "DOCTOR"),

@@ -104,6 +104,14 @@ export async function getPatientReferrals(patientId: string): Promise<Referral[]
   return referrals.map(toReferralDto);
 }
 
+export async function deleteReferral(referralId: string): Promise<{ id: string }> {
+  const referral = await prisma.referral.findUnique({ where: { id: referralId } });
+  if (!referral) throw ApiError.notFound("Referral not found");
+
+  await prisma.referral.delete({ where: { id: referralId } });
+  return { id: referralId };
+}
+
 function toReferralDto(ref: any): Referral {
   return {
     id: ref.id,

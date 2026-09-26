@@ -34,6 +34,7 @@ import { toast } from "@upchaar/ui/sonner";
 import { LiveQueueCard } from "@/components/queue/live-queue-card";
 import { api, errorMessage, isApiError } from "@/lib/api";
 import { formatDate, formatDateTime, formatRelative, formatTime } from "@/lib/format";
+import { VideoConsultationSection } from "./video-consultation-section";
 import { useAppointment } from "@/lib/queries";
 
 const CANCELLABLE: readonly AppointmentStatus[] = ["PENDING", "CONFIRMED"];
@@ -234,6 +235,10 @@ export function AppointmentDetailView({ appointmentId }: { appointmentId: string
           </CardContent>
         </Card>
       </div>
+
+      {appointment.type === "VIDEO" && ["PENDING", "CONFIRMED", "IN_PROGRESS"].includes(appointment.status) && (
+        <VideoConsultationSection appointmentId={appointmentId} />
+      )}
 
       <Card>
         <CardHeader>

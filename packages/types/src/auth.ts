@@ -9,7 +9,7 @@ import {
 } from "./common.js";
 
 export const loginSchema = z.object({
-  email: emailSchema,
+  email: z.string().trim().min(1, "Email or phone number is required"),
   password: z.string().min(1, "Password is required"),
 });
 export type LoginInput = z.infer<typeof loginSchema>;
@@ -18,7 +18,7 @@ export type LoginInput = z.infer<typeof loginSchema>;
 
 export const patientRegisterSchema = z.object({
   name: z.string().trim().min(2, "Name is too short").max(80),
-  email: emailSchema,
+  email: emailSchema.optional().or(z.literal('')).transform(val => val === '' ? undefined : val),
   password: passwordSchema,
   phone: phoneSchema,
   dateOfBirth: z.coerce.date().refine((d) => d < new Date(), {
@@ -43,7 +43,7 @@ export type PatientRegisterInput = z.infer<typeof patientRegisterSchema>;
 export type PatientProfile = {
   id: string;
   name: string;
-  email: string;
+  email: string | null;
   phone: string;
   dateOfBirth: string;
   gender: z.infer<typeof GenderSchema>;

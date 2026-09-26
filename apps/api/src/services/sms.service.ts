@@ -27,6 +27,7 @@ export class SmsService {
     const token = process.env.JIO_GATEWAY_TOKEN || "f3b83d8b-f4b7-4cc4-8bba-fadefcab109c";
 
     const endpoint = gatewayUrl.endsWith("/") ? `${gatewayUrl}send` : `${gatewayUrl}/send`;
+    const formattedPhone = phone.startsWith("+") ? phone : `+91${phone}`;
 
     const response = await fetch(endpoint, {
       method: "POST",
@@ -35,7 +36,7 @@ export class SmsService {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        to: phone,
+        to: formattedPhone,
         message,
       }),
     });
@@ -45,7 +46,7 @@ export class SmsService {
       throw new Error(`Jio SIM Gateway error [${response.status}]: ${errorText}`);
     }
 
-    console.log(`[SMS - Jio SIM Gateway SUCCESS] Sent to +91${phone}`);
+    console.log(`[SMS - Jio SIM Gateway SUCCESS] Sent to ${formattedPhone}`);
     return true;
   }
 
@@ -180,5 +181,31 @@ export class SmsService {
     receiveSms?: boolean;
   }): Promise<void> {
     await this.sendConsultationCompletedSms(appt);
+  }
+
+  public static async sendAppointmentCancelledSms(appt: {
+    patientName: string;
+    patientPhone: string;
+    hospitalName: string;
+    departmentName: string;
+    receiveSms?: boolean;
+  }): Promise<void> {
+    const message = `Hi ${appt.patientName}, your appointment at ${appt.hospitalName} (${appt.departmentName}) has been CANCELLED. If you did not request this, please contact support. - Upchaar`;
+    await this.sendSms({ phone: appt.patientPhone, message, receiveSms: appt.receiveSms });
+  }
+
+  public static async sendAppointmentInProgressSms(appt: {
+    patientName: string;
+    patientPhone: string;
+    hospitalName: string;
+    departmentName: string;
+    doctorName?: string;
+    receiveSms?: boolean;
+  }): Promise<void> {
+    const rawDoc = appt.doctorName ? appt.doctorName.trim() : "";
+    const cleanDoc = rawDoc.replace(/^(dr\.?\s*)+/i, "").trim();
+    const docPart = cleanDoc ? ` with Dr. ${cleanDoc}` : "";
+    const message = `Hi ${appt.patientName}, your turn has arrived at ${appt.hospitalName} (${appt.departmentName})${docPart}. Please enter the consultation room now. - Upchaar`;
+    await this.sendSms({ phone: appt.patientPhone, message, receiveSms: appt.receiveSms });
   }
 }

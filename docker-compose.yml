@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-upchaar_dev_password}
       POSTGRES_DB: ${POSTGRES_DB:-upchaar}
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -59,7 +59,10 @@ services:
       # access to the 2.x/3.x model families. gemini-2.5-flash is the closest
       # match to the app's original fast/cheap-tier choice.
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
-      CORS_ORIGINS: http://localhost:3000,http://localhost:3001,http://localhost:3002
+      CORS_ORIGINS: "*"
+      LIVEKIT_URL: ${LIVEKIT_URL}
+      LIVEKIT_API_KEY: ${LIVEKIT_API_KEY}
+      LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET}
     ports:
       - "4000:4000"
     healthcheck:
@@ -104,6 +107,9 @@ services:
       PORT: 3001
       API_URL: http://api:4000/api/v1
       NEXT_PUBLIC_API_URL: http://localhost:4000/api/v1
+      LIVEKIT_URL: ${LIVEKIT_URL}
+      LIVEKIT_API_KEY: ${LIVEKIT_API_KEY}
+      LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET}
     ports:
       - "3001:3001"
 
@@ -125,6 +131,41 @@ services:
       NEXT_PUBLIC_API_URL: http://localhost:4000/api/v1
     ports:
       - "3002:3002"
+
+  health-worker:
+    build:
+      context: .
+      dockerfile: apps/health-worker/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:4000/api/v1
+    container_name: upchaar-health-worker
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3003
+      API_URL: http://api:4000/api/v1
+      NEXT_PUBLIC_API_URL: http://localhost:4000/api/v1
+      DATABASE_URL: postgresql://${POSTGRES_USER:-upchaar}:${POSTGRES_PASSWORD:-upchaar_dev_password}@postgres:5432/${POSTGRES_DB:-upchaar}?schema=public
+      LIVEKIT_URL: ${LIVEKIT_URL}
+      LIVEKIT_API_KEY: ${LIVEKIT_API_KEY}
+      LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET}
+    ports:
+      - "3003:3003"
+
+  landing:
+    build:
+      context: .
+      dockerfile: apps/landing/Dockerfile
+    container_name: upchaar-landing
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3004
+    ports:
+      - "3004:3004"
 
 volumes:
   pgdata:

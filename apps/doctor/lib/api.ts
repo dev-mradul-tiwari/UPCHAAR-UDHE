@@ -334,6 +334,11 @@ export const api = {
       apiRequest<Referral>(`/referrals/${id}/connect`, { method: "POST", body: body ?? {} }),
     myReferrals: () => apiRequest<Referral[]>("/referrals/my"),
   },
+
+  webrtc: {
+    token: (appointmentId: string, token?: string) =>
+      apiRequest<{ token: string; roomName: string; url: string }>(`/webrtc/token/${appointmentId}`, { token }),
+  },
 } as const;
 
 /* ------------------------------------------------------------------- SSE */

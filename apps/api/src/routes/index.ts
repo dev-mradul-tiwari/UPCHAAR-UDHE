@@ -13,6 +13,8 @@ import { recordsRouter } from "./records.routes.js";
 import { feedbackRouter } from "./feedback.js";
 import { referralRouter } from "./referrals.js";
 import { streamRouter } from "./stream.routes.js";
+import { healthWorkerRouter } from "./health-worker.routes.js";
+import { webrtcRouter } from "./webrtc.routes.js";
 
 /** Everything under `/api/v1` — see docs/API_CONTRACT.md. */
 export const apiRouter: Router = Router();
@@ -30,3 +32,5 @@ apiRouter.use("/records", recordsRouter);
 apiRouter.use("/referrals", referralRouter);
 apiRouter.use("/feedback", feedbackRouter);
 apiRouter.use("/ai", aiRouter);
+apiRouter.use("/health-worker", healthWorkerRouter);
+apiRouter.use("/webrtc", webrtcRouter);

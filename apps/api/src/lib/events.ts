@@ -12,7 +12,7 @@ export type AppointmentChanged = {
   patientId: string;
   /** UTC calendar day the appointment is queued in, ISO-8601. */
   scheduledDay: string;
-  reason: "created" | "status" | "assigned" | "cancelled";
+  reason: "created" | "status" | "assigned" | "cancelled" | "video-request";
 };
 
 type Listener = (event: AppointmentChanged) => void;

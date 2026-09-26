@@ -73,15 +73,15 @@ export function LoginForm() {
         <form className="grid gap-5" onSubmit={handleSubmit} noValidate>
           <FormAlert error={failure} fallback="We could not sign you in." />
 
-          <FormField label="Email address" error={firstError(errors, "email")} required>
+          <FormField label="Email address or Phone" error={firstError(errors, "email")} required>
             {(field) => (
               <Input
                 {...field}
-                type="email"
+                type="text"
                 name="email"
-                autoComplete="email"
-                inputMode="email"
-                placeholder="you@example.com"
+                autoComplete="username"
+                inputMode="text"
+                placeholder="you@example.com or 9876543210"
                 icon={<Mail />}
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}

@@ -132,7 +132,7 @@ export function DashboardView() {
                           {isConnected ? "Specialist Connection Ready" : "Active Medical Referral"}
                         </CardTitle>
                         <CardDescription className="text-xs">
-                          Referred by <strong className="text-foreground">Dr. {referral.referringDoctorName}</strong> ({referral.referringHospitalName})
+                          Referred by <strong className="text-foreground">{referral.referringDoctorName.startsWith("Dr.") ? referral.referringDoctorName : `Dr. ${referral.referringDoctorName}`}</strong> ({referral.referringHospitalName})
                         </CardDescription>
                       </div>
                     </div>

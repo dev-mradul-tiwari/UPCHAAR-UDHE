@@ -11,10 +11,13 @@
     "clean": "rm -rf .next .turbo node_modules"
   },
   "dependencies": {
+    "@livekit/components-react": "^2.9.24",
+    "@livekit/components-styles": "^1.2.0",
     "@tanstack/react-query": "^5.66.0",
     "@upchaar/types": "workspace:*",
     "@upchaar/ui": "workspace:*",
     "date-fns": "^3.6.0",
+    "livekit-client": "^2.22.3",
     "lucide-react": "^1.31.0",
     "next": "^15.1.6",
     "react": "^19.2.0",

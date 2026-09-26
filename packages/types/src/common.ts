@@ -18,6 +18,9 @@ export const AppointmentStatusSchema = z.enum([
 ]);
 export type AppointmentStatus = z.infer<typeof AppointmentStatusSchema>;
 
+export const AppointmentTypeSchema = z.enum(["IN_PERSON", "VIDEO"]);
+export type AppointmentType = z.infer<typeof AppointmentTypeSchema>;
+
 export const BedTypeSchema = z.enum(["ICU", "GENERAL", "PREMIUM"]);
 export type BedType = z.infer<typeof BedTypeSchema>;
 

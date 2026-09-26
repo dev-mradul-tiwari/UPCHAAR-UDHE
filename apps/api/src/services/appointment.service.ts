@@ -45,15 +45,45 @@ export function assertCanViewAppointment(
     return;
   }
 
-  if (appointment.hospitalId !== auth.hospitalId) {
-    throw ApiError.forbidden("This appointment belongs to another hospital");
+  if (auth.role === "DOCTOR") {
+    if (appointment.hospitalId !== auth.hospitalId) {
+      throw ApiError.forbidden("This appointment belongs to another hospital");
+    }
+    if (appointment.doctorId && appointment.doctorId !== auth.sub) {
+      throw ApiError.forbidden("This appointment belongs to another doctor");
+    }
+    return;
   }
 }
 
-function scopeFilter(auth: AuthenticatedUser): Prisma.AppointmentWhereInput {
+async function scopeFilter(auth: AuthenticatedUser): Promise<Prisma.AppointmentWhereInput> {
   if (auth.role === "PATIENT") return { patientId: auth.sub };
   if (auth.role === "HOSPITAL") return { hospitalId: auth.sub };
   if (!auth.hospitalId) throw ApiError.forbidden("No hospital is associated with this account");
+
+  if (auth.role === "DOCTOR") {
+    const doctor = await prisma.doctor.findUnique({
+      where: { id: auth.sub },
+      select: { departmentId: true },
+    });
+
+    if (doctor?.departmentId) {
+      return {
+        hospitalId: auth.hospitalId,
+        departmentId: doctor.departmentId,
+        OR: [
+          { doctorId: auth.sub },
+          { doctorId: null },
+        ],
+      };
+    }
+
+    return {
+      hospitalId: auth.hospitalId,
+      doctorId: auth.sub,
+    };
+  }
+
   return { hospitalId: auth.hospitalId };
 }
 
@@ -86,8 +116,9 @@ export async function listAppointments(
 ): Promise<Paginated<Appointment>> {
   await autoResolveTimedOutAppointments();
 
+  const scoped = await scopeFilter(auth);
   const where: Prisma.AppointmentWhereInput = {
-    ...scopeFilter(auth),
+    ...scoped,
     ...queryFilter(query),
   };
 
@@ -196,6 +227,15 @@ export async function updateAppointmentStatus(
     if (peopleAhead !== 1) {
       checkAndTriggerQueueAlert(updated.id).catch(() => {});
     }
+  } else if (input.status === "IN_PROGRESS") {
+    SmsService.sendAppointmentInProgressSms({
+      patientName: updated.patient.name,
+      patientPhone: updated.patient.phone,
+      hospitalName: updated.hospital.name,
+      departmentName: updated.department.name,
+      doctorName: updated.doctor?.name,
+      receiveSms: updated.receiveSms,
+    }).catch((err) => console.warn("Failed to send in-progress SMS", err));
   } else if (input.status === "COMPLETED") {
     SmsService.sendAppointmentCompletedSms({
       patientName: updated.patient.name,
@@ -204,6 +244,14 @@ export async function updateAppointmentStatus(
       doctorName: updated.doctor?.name,
       receiveSms: updated.receiveSms,
     }).catch((err) => console.warn("Failed to send completed SMS", err));
+  } else if (input.status === "CANCELLED") {
+    SmsService.sendAppointmentCancelledSms({
+      patientName: updated.patient.name,
+      patientPhone: updated.patient.phone,
+      hospitalName: updated.hospital.name,
+      departmentName: updated.department.name,
+      receiveSms: updated.receiveSms,
+    }).catch((err) => console.warn("Failed to send cancelled SMS", err));
   }
 
   return toAppointment(updated);
@@ -262,5 +310,13 @@ export async function cancelOwnAppointment(
   });
 
   publishAppointmentChange(updated, "cancelled");
+  SmsService.sendAppointmentCancelledSms({
+    patientName: updated.patient.name,
+    patientPhone: updated.patient.phone,
+    hospitalName: updated.hospital.name,
+    departmentName: updated.department.name,
+    receiveSms: updated.receiveSms,
+  }).catch((err) => console.warn("Failed to send cancelled SMS", err));
+
   return toAppointment(updated);
 }

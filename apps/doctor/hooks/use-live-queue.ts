@@ -16,6 +16,8 @@ export type LiveQueueConnection = {
   lastEventAt: number | null;
   /** How many times the stream has had to reconnect. */
   reconnects: number;
+  /** The most recent video request received */
+  videoRequest?: { appointmentId: string, patientId: string, timestamp: number } | null;
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -63,6 +65,8 @@ export function useLiveQueue(
   const [lastEventAt, setLastEventAt] = React.useState<number | null>(null);
   const [reconnects, setReconnects] = React.useState(0);
 
+  const [videoRequest, setVideoRequest] = React.useState<{ appointmentId: string, patientId: string, timestamp: number } | null>(null);
+
   React.useEffect(() => {
     if (!enabled || token === null || departmentId === null || departmentId.length === 0) {
       setConnection("idle");
@@ -82,6 +86,17 @@ export function useLiveQueue(
       setConnection("live");
     };
 
+    const handleVideoRequest = (event: Event) => {
+      const payload = payloadOf(event) as any;
+      if (payload?.appointmentId && payload?.patientId) {
+        setVideoRequest({
+          appointmentId: payload.appointmentId,
+          patientId: payload.patientId,
+          timestamp: Date.now()
+        });
+      }
+    };
+
     const connect = () => {
       if (cancelled) return;
       setConnection(attempt === 0 ? "connecting" : "reconnecting");
@@ -98,6 +113,7 @@ export function useLiveQueue(
       };
 
       stream.addEventListener("queue.updated", handleQueueUpdate);
+      stream.addEventListener("video.request", handleVideoRequest);
 
       stream.onerror = () => {
         if (cancelled) return;
@@ -120,12 +136,13 @@ export function useLiveQueue(
       if (retryTimer !== null) clearTimeout(retryTimer);
       if (source !== null) {
         source.removeEventListener("queue.updated", handleQueueUpdate);
+        source.removeEventListener("video.request", handleVideoRequest);
         source.close();
       }
     };
   }, [departmentId, enabled, queryClient, token]);
 
-  return { connection, lastEventAt, reconnects };
+  return { connection, lastEventAt, reconnects, videoRequest };
 }
 
 /** Re-renders every second so "updated 12s ago" actually ticks. */

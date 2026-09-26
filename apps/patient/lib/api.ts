@@ -361,6 +361,11 @@ export const api = {
         }>
       >("/feedback/pending"),
   },
+
+  webrtc: {
+    token: (appointmentId: string, token?: string) =>
+      apiRequest<{ token: string; roomName: string; url: string }>(`/webrtc/token/${appointmentId}`, { token }),
+  },
 } as const;
 
 /* ------------------------------------------------------------ AI streaming */

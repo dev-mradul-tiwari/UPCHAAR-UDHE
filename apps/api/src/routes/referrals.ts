@@ -5,6 +5,7 @@ import { getAuth, requireAuth } from "../middleware/auth.js";
 import {
   connectWithReferral,
   createReferral,
+  deleteReferral,
   getPatientReferrals,
   listReferrals,
 } from "../services/referral.service.js";
@@ -80,6 +81,19 @@ referralRouter.post("/:id/connect", async (req, res, next) => {
 
     const referral = await connectWithReferral(req.params.id, { hospitalId, doctorId });
     res.json({ success: true, data: referral });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * DELETE /api/referrals/:id
+ * Delete a referral
+ */
+referralRouter.delete("/:id", async (req, res, next) => {
+  try {
+    const result = await deleteReferral(req.params.id);
+    res.json({ success: true, data: result });
   } catch (error) {
     next(error);
   }

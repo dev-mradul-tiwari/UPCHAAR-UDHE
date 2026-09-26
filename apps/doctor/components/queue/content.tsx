@@ -58,6 +58,23 @@ export function QueueContent() {
   const liveConnection = useLiveQueue(departmentId, !!departmentId);
   const [callingNext, setCallingNext] = React.useState(false);
 
+  // Watch for incoming video requests
+  React.useEffect(() => {
+    if (liveConnection.videoRequest) {
+      // Show toast that auto-dismisses after 1 minute (60000ms)
+      toast("Incoming Video Call Request", {
+        description: "A Health Worker is waiting for you to join the consultation.",
+        duration: 60000,
+        action: {
+          label: "Accept Call",
+          onClick: () => {
+            window.open(`/consultation/${liveConnection.videoRequest?.appointmentId}`, "_blank");
+          },
+        },
+      });
+    }
+  }, [liveConnection.videoRequest]);
+
   const [notesDialogOpen, setNotesDialogOpen] = React.useState(false);
   const [notes, setNotes] = React.useState("");
   const [savingNotes, setSavingNotes] = React.useState(false);
@@ -213,15 +230,26 @@ export function QueueContent() {
         <Card className="border-primary-subtle bg-primary-subtle">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-primary-subtle-foreground">Now Serving</CardTitle>
-            <Button
-              size="sm"
-              variant="outline"
-              className="gap-1.5 bg-background/80 hover:bg-background text-foreground"
-              onClick={() => setNotesDialogOpen(true)}
-            >
-              <FileText aria-hidden className="size-4 text-primary" />
-              Write Clinical Notes
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5 bg-blue-100 hover:bg-blue-200 text-blue-700 border-blue-200"
+                onClick={() => window.open(`/consultation/${activeEntry?.appointmentId}`, "_blank")}
+              >
+                <AlertCircle aria-hidden className="size-4 text-blue-600" />
+                Join Video Call
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5 bg-background/80 hover:bg-background text-foreground"
+                onClick={() => setNotesDialogOpen(true)}
+              >
+                <FileText aria-hidden className="size-4 text-primary" />
+                Write Clinical Notes
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
