@@ -80,6 +80,7 @@ Compose brings up PostgreSQL, runs schema migrations and seed data, then starts 
 | **Doctor Console** | http://localhost:3001 |
 | **Hospital Admin Dashboard** | http://localhost:3002 |
 | **Health Worker Portal (ASHA)** | http://localhost:3003 |
+| **Government Monitoring Portal** | http://localhost:3005 |
 | **API Endpoint** | http://localhost:4000/api/v1 |
 | **Health Check** | http://localhost:4000/health |
 
