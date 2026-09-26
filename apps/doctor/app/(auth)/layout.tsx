@@ -24,6 +24,17 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <footer className="px-4 py-6 text-center text-xs text-muted-foreground sm:px-8">
         Upchaar keeps your health information private and encrypted in transit.
       </footer>
+
+      <div className="fixed bottom-4 left-4 z-50 rounded-xl border border-border bg-card p-4 shadow-2xl text-sm">
+        <h4 className="font-semibold mb-2 text-foreground flex items-center gap-2">
+          <span className="flex h-2 w-2 rounded-full bg-emerald-500"></span>
+          Demo Credentials
+        </h4>
+        <div className="space-y-1 text-muted-foreground">
+          <p><span className="font-medium text-foreground">Email:</span> aarti.deshmukh@apollocity.in</p>
+          <p><span className="font-medium text-foreground">Password:</span> Doctor123!</p>
+        </div>
+      </div>
     </div>
   );
 }
