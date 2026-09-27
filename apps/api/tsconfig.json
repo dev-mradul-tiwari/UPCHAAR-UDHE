@@ -6,6 +6,6 @@
     "module": "CommonJS",
     "moduleResolution": "node"
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "serverless/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }
