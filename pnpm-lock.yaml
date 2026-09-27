@@ -270,6 +270,9 @@ importers:
 
   apps/landing:
     dependencies:
+      '@upchaar/api':
+        specifier: workspace:*
+        version: link:../api
       bcryptjs:
         specifier: ^2.4.3
         version: 2.4.3
