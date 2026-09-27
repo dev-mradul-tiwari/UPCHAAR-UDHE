@@ -11,6 +11,7 @@
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "clean": "turbo run clean && rm -rf node_modules",
+    "postinstall": "pnpm --filter @upchaar/db run generate",
     "format": "prettier --write \"**/*.{ts,tsx,md,json,css}\"",
     "db:generate": "pnpm --filter @upchaar/db run generate",
     "db:push": "pnpm --filter @upchaar/db run push",
