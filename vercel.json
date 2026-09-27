@@ -21,6 +21,11 @@
       "entrypoint": "api/index.ts"
     }
   },
+  "functions": {
+    "apps/api/**/*": {
+      "includeFiles": "../../packages/db/generated/client/**/*"
+    }
+  },
   "rewrites": [
     {
       "source": "/api/v1/:path*",
