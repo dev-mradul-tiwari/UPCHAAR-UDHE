@@ -17,7 +17,8 @@
       "root": "apps/hospital"
     },
     "api": {
-      "root": "apps/api"
+      "root": "apps/api",
+      "entrypoint": "api/index.js"
     }
   },
   "rewrites": [
