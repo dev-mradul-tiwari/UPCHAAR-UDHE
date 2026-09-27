@@ -4,7 +4,9 @@
   "private": true,
   "description": "Upchaar — hospital, doctor and patient platform",
   "packageManager": "pnpm@11.22.0",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
@@ -26,5 +28,9 @@
     "prettier": "^3.4.2",
     "turbo": "^2.3.4",
     "typescript": "^5.7.3"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.3",
+    "prisma": "^6.19.3"
   }
 }
