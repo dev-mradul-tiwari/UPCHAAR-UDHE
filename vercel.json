@@ -18,7 +18,7 @@
     },
     "api": {
       "root": "apps/api",
-      "entrypoint": "dist/index.js"
+      "entrypoint": "dist/serverless.js"
     }
   },
   "rewrites": [
