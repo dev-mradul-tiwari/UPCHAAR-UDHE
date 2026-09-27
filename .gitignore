@@ -14,3 +14,6 @@ out/
 *.log
 npm-debug.log*
 coverage/
+
+.vercel
+.env*

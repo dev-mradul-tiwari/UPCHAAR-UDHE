@@ -1,0 +1,385 @@
+// Upchaar data model.
+// Field names here are mirrored exactly by packages/types — see docs/API_CONTRACT.md.
+
+generator client {
+  provider      = "prisma-client-js"
+  output        = "../src/generated/client"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  PATIENT
+  DOCTOR
+  HOSPITAL
+  ASHA
+  ANM
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum AppointmentType {
+  IN_PERSON
+  VIDEO
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  TIMED_OUT
+}
+
+enum BedType {
+  ICU
+  GENERAL
+  PREMIUM
+}
+
+model Patient {
+  id           String   @id @default(cuid())
+  name         String
+  email        String?  @unique
+  passwordHash String
+  phone        String   @unique
+  dateOfBirth  DateTime
+  gender       Gender
+  bloodGroup   String?
+
+  medicalHistory MedicalHistory?
+  appointments   Appointment[]
+  referrals      Referral[]
+  feedbacks      Feedback[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+}
+
+model MedicalHistory {
+  id        String  @id @default(cuid())
+  patientId String  @unique
+  patient   Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  chronicDiseases    String[] @default([])
+  allergies          String[] @default([])
+  pastSurgeries      String[] @default([])
+  currentMedications String[] @default([])
+  smoking            Boolean  @default(false)
+  alcohol            Boolean  @default(false)
+  notes              String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Hospital {
+  id           String @id @default(cuid())
+  name         String
+  email        String @unique
+  passwordHash String
+  phone        String
+
+  type               String // e.g. "Multi-speciality", "Clinic"
+  registrationNumber String @unique
+
+  addressLine String
+  city        String
+  state       String
+  zipcode     String
+
+  rating Float @default(4.0)
+
+  departments       Department[]
+  doctors           Doctor[]
+  appointments      Appointment[]
+  beds              BedInventory[]
+  medicines         MedicineInventory[]
+  referralsSent     Referral[]          @relation("ReferringHospital")
+  referralsReceived Referral[]          @relation("ConnectedHospital")
+  feedbacks         Feedback[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([city])
+  @@index([email])
+}
+
+model Department {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+
+  hospitalId String
+  hospital   Hospital @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+
+  // Head doctor is a plain optional pointer; the doctor's own membership is
+  // expressed by Doctor.departmentId. Two distinct relations, explicitly named.
+  headDoctorId String? @unique
+  headDoctor   Doctor? @relation("DepartmentHead", fields: [headDoctorId], references: [id], onDelete: SetNull)
+
+  avgConsultMinutes Int @default(15)
+
+  doctors      Doctor[]      @relation("DepartmentMembers")
+  appointments Appointment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([hospitalId, name])
+  @@index([hospitalId])
+}
+
+model Doctor {
+  id           String @id @default(cuid())
+  name         String
+  email        String @unique
+  passwordHash String
+  phone        String
+
+  specialization  String
+  experienceYears Int    @default(0)
+  rating          Float  @default(4.0)
+
+  hospitalId String
+  hospital   Hospital @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+
+  departmentId String?
+  department   Department? @relation("DepartmentMembers", fields: [departmentId], references: [id], onDelete: SetNull)
+
+  headedDepartment Department? @relation("DepartmentHead")
+
+  isAvailable        Boolean @default(true)
+  mustChangePassword Boolean @default(true)
+
+  appointments      Appointment[]
+  referralsSent     Referral[]    @relation("ReferringDoctor")
+  referralsReceived Referral[]    @relation("ConnectedDoctor")
+  feedbacks         Feedback[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([hospitalId])
+  @@index([departmentId])
+  @@index([email])
+}
+
+model Appointment {
+  id     String            @id @default(cuid())
+  reason String
+  status AppointmentStatus @default(PENDING)
+  type   AppointmentType   @default(IN_PERSON)
+
+  scheduledFor DateTime
+  // Calendar day (UTC midnight) of scheduledFor. Denormalised so the
+  // (hospital, department, day) queue can be indexed and locked cheaply.
+  scheduledDay DateTime
+
+  // Monotonic per (hospitalId, departmentId, scheduledDay). Allocated in a
+  // transaction at booking time. See docs/ARCHITECTURE.md → Queue design.
+  queueNumber Int
+
+  patientId String
+  patient   Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  hospitalId String
+  hospital   Hospital @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+
+  departmentId String
+  department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+
+  doctorId String?
+  doctor   Doctor? @relation(fields: [doctorId], references: [id], onDelete: SetNull)
+
+  startedAt   DateTime?
+  completedAt DateTime?
+  notes       String?
+  receiveSms  Boolean   @default(true)
+  feedback    Feedback?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([hospitalId, departmentId, scheduledFor, queueNumber])
+  @@index([patientId])
+  @@index([hospitalId, status])
+  @@index([departmentId, scheduledDay, status])
+  @@index([doctorId, scheduledDay])
+}
+
+model BedInventory {
+  id String @id @default(cuid())
+
+  hospitalId String
+  hospital   Hospital @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+
+  type      BedType
+  total     Int     @default(0)
+  available Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([hospitalId, type])
+  @@index([hospitalId])
+}
+
+model MedicineInventory {
+  id String @id @default(cuid())
+
+  hospitalId String
+  hospital   Hospital @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+
+  name       String
+  quantity   Int
+  threshold  Int      @default(10)
+  unit       String   @default("tablets")
+  expiryDate DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([hospitalId])
+  @@index([hospitalId, name])
+}
+
+model Referral {
+  id        String  @id @default(cuid())
+  patientId String
+  patient   Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  referringDoctorId String
+  referringDoctor   Doctor @relation("ReferringDoctor", fields: [referringDoctorId], references: [id], onDelete: Cascade)
+
+  referringHospitalId String
+  referringHospital   Hospital @relation("ReferringHospital", fields: [referringHospitalId], references: [id], onDelete: Cascade)
+
+  reason               String
+  targetSpecialization String?
+
+  status String @default("OPEN")
+
+  connectedDoctorId String?
+  connectedDoctor   Doctor? @relation("ConnectedDoctor", fields: [connectedDoctorId], references: [id], onDelete: SetNull)
+
+  connectedHospitalId String?
+  connectedHospital   Hospital? @relation("ConnectedHospital", fields: [connectedHospitalId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([patientId])
+  @@index([referringHospitalId])
+  @@index([referringDoctorId])
+  @@index([status])
+}
+
+model Feedback {
+  id            String      @id @default(cuid())
+  appointmentId String      @unique
+  appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+
+  patientId String
+  patient   Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  doctorId String
+  doctor   Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  hospitalId String
+  hospital   Hospital @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+
+  doctorRating   Int
+  hospitalRating Int
+  comment        String?
+
+  createdAt DateTime @default(now())
+
+  @@index([doctorId])
+  @@index([hospitalId])
+  @@index([patientId])
+}
+
+// ----------------------------------------------------------------------------
+// Health Worker Phase Additions
+// Appended to the bottom to comply with zero-modification rules.
+// ----------------------------------------------------------------------------
+
+model HealthWorker {
+  id           String  @id @default(cuid())
+  name         String
+  phone        String  @unique
+  passwordHash String
+  role         Role
+  region       String?
+
+  patients  HealthWorkerPatientAssignment[]
+  vitals    FieldVitals[]
+  riskFlags HighRiskFlag[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model HealthWorkerPatientAssignment {
+  id             String       @id @default(cuid())
+  healthWorkerId String
+  healthWorker   HealthWorker @relation(fields: [healthWorkerId], references: [id], onDelete: Cascade)
+  patientId      String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([healthWorkerId, patientId])
+  @@index([healthWorkerId])
+  @@index([patientId])
+}
+
+model FieldVitals {
+  id String @id @default(cuid())
+
+  patientId      String
+  healthWorkerId String
+  healthWorker   HealthWorker @relation(fields: [healthWorkerId], references: [id], onDelete: Cascade)
+
+  bloodPressureSystolic  Int?
+  bloodPressureDiastolic Int?
+  temperature            Float?
+  weight                 Float?
+  bloodSugar             Float?
+  recordedAt             DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([patientId])
+  @@index([healthWorkerId])
+}
+
+model HighRiskFlag {
+  id String @id @default(cuid())
+
+  patientId      String
+  healthWorkerId String
+  healthWorker   HealthWorker @relation(fields: [healthWorkerId], references: [id], onDelete: Cascade)
+
+  category String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([patientId])
+  @@index([healthWorkerId])
+}
