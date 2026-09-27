@@ -7,7 +7,7 @@ export default function LandingPage() {
       name: 'Health Worker',
       description: 'Conduct field operations, remote patient monitoring, and vitals tracking in villages.',
       icon: BriefcaseMedical,
-      url: process.env.NEXT_PUBLIC_WORKER_URL || 'http://localhost:3003',
+      url: process.env.NEXT_PUBLIC_WORKER_URL || '/health-worker',
       color: 'from-amber-500/20 to-amber-600/20',
       border: 'hover:border-amber-500/50',
       text: 'text-amber-400'
@@ -16,7 +16,7 @@ export default function LandingPage() {
       name: 'Patient',
       description: 'Book appointments, view medical records, and consult doctors directly online.',
       icon: User,
-      url: process.env.NEXT_PUBLIC_PATIENT_URL || 'http://localhost:3000',
+      url: process.env.NEXT_PUBLIC_PATIENT_URL || '/patient',
       color: 'from-blue-500/20 to-blue-600/20',
       border: 'hover:border-blue-500/50',
       text: 'text-blue-400'
@@ -25,7 +25,7 @@ export default function LandingPage() {
       name: 'Doctor',
       description: 'Manage your daily appointments, access patient history, and conduct video calls.',
       icon: Stethoscope,
-      url: process.env.NEXT_PUBLIC_DOCTOR_URL || 'http://localhost:3001',
+      url: process.env.NEXT_PUBLIC_DOCTOR_URL || '/doctor',
       color: 'from-emerald-500/20 to-emerald-600/20',
       border: 'hover:border-emerald-500/50',
       text: 'text-emerald-400'
@@ -34,7 +34,7 @@ export default function LandingPage() {
       name: 'Hospital Admin',
       description: 'Oversee departments, medicine inventory, available beds, and staff performance.',
       icon: Building2,
-      url: process.env.NEXT_PUBLIC_HOSPITAL_URL || 'http://localhost:3002',
+      url: process.env.NEXT_PUBLIC_HOSPITAL_URL || '/hospital-admin',
       color: 'from-purple-500/20 to-purple-600/20',
       border: 'hover:border-purple-500/50',
       text: 'text-purple-400'
@@ -43,7 +43,7 @@ export default function LandingPage() {
       name: 'Government Monitoring',
       description: 'Monitor nationwide health metrics, track disease outbreaks, and allocate resources.',
       icon: Activity,
-      url: process.env.NEXT_PUBLIC_GOVT_URL || 'http://localhost:3005',
+      url: process.env.NEXT_PUBLIC_GOVT_URL || '/hospital-admin',
       color: 'from-red-500/20 to-red-600/20',
       border: 'hover:border-red-500/50',
       text: 'text-red-400'
