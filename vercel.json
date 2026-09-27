@@ -17,8 +17,7 @@
       "root": "apps/hospital"
     },
     "api": {
-      "root": "apps/api",
-      "entrypoint": "serverless.js"
+      "root": "apps/api"
     }
   },
   "rewrites": [
