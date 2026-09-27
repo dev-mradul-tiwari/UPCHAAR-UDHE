@@ -15,10 +15,20 @@
     },
     "hospital": {
       "root": "apps/hospital"
+    },
+    "api": {
+      "root": "apps/api"
     }
   },
   "rewrites": [
-
+    {
+      "source": "/api/v1/:path*",
+      "destination": { "service": "api" }
+    },
+    {
+      "source": "/health",
+      "destination": { "service": "api" }
+    },
     {
       "source": "/patient/:path*",
       "destination": { "service": "patient" }
