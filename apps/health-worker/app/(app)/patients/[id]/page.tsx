@@ -77,7 +77,7 @@ export default async function PatientProfilePage({
           
           {riskFlags.length > 0 && (
             <div className="mt-4 flex flex-wrap gap-2">
-              {riskFlags.map(flag => (
+              {riskFlags.map((flag: typeof riskFlags[number]) => (
                 <Badge key={flag.id} variant="destructive">
                   {flag.category} Risk
                 </Badge>
