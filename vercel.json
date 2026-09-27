@@ -15,20 +15,21 @@
     },
     "hospital": {
       "root": "apps/hospital"
-    },
-    "api": {
-      "root": "apps/api",
-      "entrypoint": "dist/serverless.js"
+    }
+  },
+  "functions": {
+    "apps/landing/src/pages/api/**/*": {
+      "includeFiles": "../../packages/db/generated/client/**/*"
     }
   },
   "rewrites": [
     {
       "source": "/api/v1/:path*",
-      "destination": { "service": "api" }
+      "destination": { "service": "landing" }
     },
     {
       "source": "/health",
-      "destination": { "service": "api" }
+      "destination": { "service": "landing" }
     },
     {
       "source": "/patient/:path*",

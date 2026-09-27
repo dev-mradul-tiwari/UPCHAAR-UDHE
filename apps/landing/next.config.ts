@@ -10,6 +10,8 @@ const nextConfig: NextConfig = {
     : process.env.NODE_ENV === "production"
     ? "standalone"
     : undefined,
+  serverExternalPackages: ["express", "cors", "bcryptjs", "@prisma/client", "prisma"],
+  transpilePackages: ["@upchaar/api"],
 };
 
 export default nextConfig;
