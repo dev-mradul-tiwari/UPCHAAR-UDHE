@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+
 
 import dotenv from "dotenv";
 import { z } from "zod";
@@ -10,7 +10,7 @@ import { z } from "zod";
  * overwrites a variable that is already set), so a container-provided
  * environment always takes precedence over a checked-out repo .env.
  */
-const moduleDir = path.dirname(fileURLToPath(import.meta.url));
+const moduleDir = typeof __dirname !== "undefined" ? __dirname : process.cwd();
 const candidates = [
   path.resolve(process.cwd(), ".env"),
   path.resolve(moduleDir, "../.env"),
