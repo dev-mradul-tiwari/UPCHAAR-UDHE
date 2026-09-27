@@ -2,7 +2,12 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "services": {
     "landing": {
-      "root": "apps/landing"
+      "root": "apps/landing",
+      "functions": {
+        "src/pages/api/**/*": {
+          "includeFiles": "../../packages/db/generated/client/**/*"
+        }
+      }
     },
     "patient": {
       "root": "apps/patient"
@@ -15,11 +20,6 @@
     },
     "hospital": {
       "root": "apps/hospital"
-    }
-  },
-  "functions": {
-    "apps/landing/src/pages/api/**/*": {
-      "includeFiles": "../../packages/db/generated/client/**/*"
     }
   },
   "rewrites": [
