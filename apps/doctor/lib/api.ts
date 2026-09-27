@@ -23,7 +23,7 @@ import type {
   Role,
 } from "@upchaar/types";
 
-const DEFAULT_API_URL = "http://localhost:4000/api/v1";
+const DEFAULT_API_URL = "/api/v1";
 
 /**
  * The browser always talks to the public URL; server-side code prefers
@@ -157,7 +157,16 @@ function statusFallback(status: number): string {
 }
 
 function buildUrl(path: string, query?: QueryParams, base = API_BASE_URL): string {
-  const url = new URL(`${base}${path.startsWith("/") ? path : `/${path}`}`);
+  const fullPath = `${base}${path.startsWith("/") ? path : `/${path}`}`;
+  let baseOrigin: string | undefined = undefined;
+  if (!fullPath.startsWith("http://") && !fullPath.startsWith("https://")) {
+    baseOrigin = typeof window !== "undefined"
+      ? window.location.origin
+      : process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : "http://localhost:4000";
+  }
+  const url = new URL(fullPath, baseOrigin);
   if (query) {
     for (const [key, value] of Object.entries(query)) {
       if (value === undefined || value === null || value === "") continue;

@@ -5,7 +5,7 @@
  * Uses NEXT_PUBLIC_API_URL (browser + server) or API_URL (server-only, e.g. Docker).
  */
 
-const DEFAULT_API_URL = "http://localhost:4000/api/v1";
+const DEFAULT_API_URL = "/api/v1";
 
 export const API_BASE_URL = (
   (typeof window === "undefined"
@@ -22,7 +22,16 @@ export type RequestOptions = {
 };
 
 function buildUrl(path: string, query?: RequestOptions["query"]): string {
-  const url = new URL(`${API_BASE_URL}${path.startsWith("/") ? path : `/${path}`}`);
+  const fullPath = `${API_BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;
+  let baseOrigin: string | undefined = undefined;
+  if (!fullPath.startsWith("http://") && !fullPath.startsWith("https://")) {
+    baseOrigin = typeof window !== "undefined"
+      ? window.location.origin
+      : process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : "http://localhost:4000";
+  }
+  const url = new URL(fullPath, baseOrigin);
   if (query) {
     for (const [key, value] of Object.entries(query)) {
       if (value === undefined || value === null) continue;
