@@ -13386,7 +13386,7 @@ function createApp() {
   app2.use(import_express18.default.json({ limit: env.JSON_BODY_LIMIT }));
   app2.use(import_express18.default.urlencoded({ extended: false, limit: env.JSON_BODY_LIMIT }));
   app2.use(requestLogger);
-  app2.use(API_PREFIX, healthRouter);
+  app2.use(`${API_PREFIX}/health`, healthRouter);
   app2.use(API_PREFIX, apiRouter);
   app2.use(notFoundHandler);
   app2.use(errorHandler);
