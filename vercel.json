@@ -2,12 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "services": {
     "landing": {
-      "root": "apps/landing",
-      "functions": {
-        "src/pages/api/**/*": {
-          "includeFiles": "../../packages/db/generated/client/**/*"
-        }
-      }
+      "root": "apps/landing"
     },
     "patient": {
       "root": "apps/patient"
