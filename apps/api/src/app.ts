@@ -52,8 +52,8 @@ export function createApp(): Express {
   app.use(express.urlencoded({ extended: false, limit: env.JSON_BODY_LIMIT }));
   app.use(requestLogger);
 
-  app.use(`${API_PREFIX}/health`, healthRouter);
   app.use(API_PREFIX, apiRouter);
+  apiRouter.use("/health", healthRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);
