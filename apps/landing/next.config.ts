@@ -12,6 +12,7 @@ const nextConfig: NextConfig = {
     : undefined,
   serverExternalPackages: ["express", "cors", "bcryptjs", "@prisma/client", "prisma"],
   transpilePackages: ["@upchaar/api"],
+  outputFileTracingRoot: require("path").join(__dirname, "../../"),
 };
 
 export default nextConfig;
