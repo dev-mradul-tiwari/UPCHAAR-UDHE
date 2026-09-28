@@ -12,6 +12,7 @@ const nextConfig: NextConfig = {
     : undefined,
   serverExternalPackages: ["express", "cors", "bcryptjs", "@prisma/client", "prisma"],
   outputFileTracingRoot: require("path").join(__dirname, "../../"),
+  outputFileTracingIncludes: { "/**": ["../../packages/db/generated/client/**/*"] },
 };
 
 export default nextConfig;
