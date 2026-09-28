@@ -11,7 +11,6 @@ const nextConfig: NextConfig = {
     ? "standalone"
     : undefined,
   serverExternalPackages: ["express", "cors", "bcryptjs", "@prisma/client", "prisma"],
-  transpilePackages: ["@upchaar/api"],
   outputFileTracingRoot: require("path").join(__dirname, "../../"),
 };
 
