@@ -24,6 +24,16 @@
         "!.next/cache/**"
       ]
     },
+    "@upchaar/landing#build": {
+      "dependsOn": [
+        "@upchaar/api#build",
+        "^build"
+      ],
+      "outputs": [
+        ".next/**",
+        "!.next/cache/**"
+      ]
+    },
     "dev": {
       "dependsOn": [
         "^build"
