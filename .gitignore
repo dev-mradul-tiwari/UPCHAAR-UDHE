@@ -1,10 +1,14 @@
 node_modules/
-dist/
 build/
 .next/
 out/
 .turbo/
 *.tsbuildinfo
+
+# Allow apps/api/dist to be committed for Vercel deployment
+# https://upchaar-udhe.vercel.app uses apps/landing/src/pages/api/v1/[...catchAll].ts
+# which imports from apps/api/dist/serverless.js
+!apps/api/dist/
 
 .env
 .env.*
