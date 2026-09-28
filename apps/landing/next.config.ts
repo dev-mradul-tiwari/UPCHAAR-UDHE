@@ -10,7 +10,7 @@ const nextConfig: NextConfig = {
     : process.env.NODE_ENV === "production"
     ? "standalone"
     : undefined,
-  serverExternalPackages: ["express", "cors", "bcryptjs", "@prisma/client", "prisma"],
+  serverExternalPackages: ["express", "cors", "bcryptjs", "@prisma/client", "prisma", "@upchaar/db"],
   outputFileTracingRoot: require("path").join(__dirname, "../../"),
   outputFileTracingIncludes: { "/**": ["../../packages/db/generated/client/**/*"] },
 };
