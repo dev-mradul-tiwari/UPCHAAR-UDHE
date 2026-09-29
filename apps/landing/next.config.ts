@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import path from "path";
 
 const nextConfig: NextConfig = {
   /**
@@ -11,8 +12,18 @@ const nextConfig: NextConfig = {
     ? "standalone"
     : undefined,
   serverExternalPackages: ["express", "cors", "bcryptjs", "@prisma/client", "prisma", "@upchaar/db"],
-  outputFileTracingRoot: require("path").join(__dirname, "../../"),
-  outputFileTracingIncludes: { "/**": ["../../packages/db/generated/client/**/*"] },
+  outputFileTracingRoot: path.join(__dirname, "../.."),
+  outputFileTracingIncludes: {
+    "/**": [
+      // The Next.js catchAll handler imports this; must be in the bundle or the function fails to load
+      "../../api/dist/**/*",
+      // @upchaar/db re-exports PrismaClient from ../generated/client and its own dist/index.js
+      "../../packages/db/dist/**/*",
+      "../../packages/db/generated/client/**/*",
+      // Shared types runtime used by the API handlers
+      "../../packages/types/dist/**/*",
+    ],
+  },
 };
 
 export default nextConfig;
