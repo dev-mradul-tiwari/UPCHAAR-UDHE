@@ -2,19 +2,24 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "services": {
     "landing": {
-      "root": "apps/landing"
+      "root": "apps/landing",
+      "framework": "nextjs"
     },
     "patient": {
-      "root": "apps/patient"
+      "root": "apps/patient",
+      "framework": "nextjs"
     },
     "doctor": {
-      "root": "apps/doctor"
+      "root": "apps/doctor",
+      "framework": "nextjs"
     },
     "health_worker": {
-      "root": "apps/health-worker"
+      "root": "apps/health-worker",
+      "framework": "nextjs"
     },
     "hospital": {
-      "root": "apps/hospital"
+      "root": "apps/hospital",
+      "framework": "nextjs"
     }
   },
   "rewrites": [
