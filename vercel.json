@@ -20,51 +20,76 @@
   "rewrites": [
     {
       "source": "/api/v1/:path*",
-      "destination": { "service": "landing" }
+      "destination": {
+        "service": "landing"
+      }
     },
     {
       "source": "/health",
-      "destination": { "service": "landing" }
+      "destination": {
+        "service": "landing"
+      }
     },
     {
       "source": "/patient/:path*",
-      "destination": { "service": "patient" }
+      "destination": {
+        "service": "patient"
+      }
     },
     {
       "source": "/patient",
-      "destination": { "service": "patient" }
+      "destination": {
+        "service": "patient"
+      }
     },
     {
       "source": "/doctor/:path*",
-      "destination": { "service": "doctor" }
+      "destination": {
+        "service": "doctor"
+      }
     },
     {
       "source": "/doctor",
-      "destination": { "service": "doctor" }
+      "destination": {
+        "service": "doctor"
+      }
     },
     {
       "source": "/health-worker/:path*",
-      "destination": { "service": "health_worker" }
+      "destination": {
+        "service": "health_worker"
+      }
     },
     {
       "source": "/health-worker",
-      "destination": { "service": "health_worker" }
+      "destination": {
+        "service": "health_worker"
+      }
     },
     {
       "source": "/hospital-admin/:path*",
-      "destination": { "service": "hospital" }
+      "destination": {
+        "service": "hospital"
+      }
     },
     {
       "source": "/hospital-admin",
-      "destination": { "service": "hospital" }
+      "destination": {
+        "service": "hospital"
+      }
     },
     {
       "source": "/",
-      "destination": { "service": "landing" }
+      "destination": {
+        "service": "landing"
+      }
     },
     {
       "source": "/:path*",
-      "destination": { "service": "landing" }
+      "destination": {
+        "service": "landing"
+      }
     }
-  ]
+  ],
+  "framework": "services"
 }
