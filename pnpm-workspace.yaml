@@ -2,8 +2,9 @@ packages:
   - "apps/*"
   - "packages/*"
 
-# pnpm 11 gates postinstall scripts. Prisma must run its script to emit the
-# generated client; esbuild/sharp need theirs to fetch platform binaries.
+# allowBuilds: pnpm 11 syntax (used locally and on Vercel when ENABLE_EXPERIMENTAL_COREPACK=1 is set)
+# onlyBuiltDependencies: pnpm 9/10 syntax (fallback for older pnpm)
+# Both are present so the file works regardless of pnpm version.
 allowBuilds:
   "@prisma/client": true
   "@prisma/engines": true
@@ -11,3 +12,11 @@ allowBuilds:
   esbuild: true
   sharp: true
   unrs-resolver: true
+
+onlyBuiltDependencies:
+  - "@prisma/client"
+  - "@prisma/engines"
+  - prisma
+  - esbuild
+  - sharp
+  - unrs-resolver
