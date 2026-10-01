@@ -7,10 +7,6 @@ settings:
 importers:
 
   .:
-    dependencies:
-      '@upchaar/db':
-        specifier: workspace:*
-        version: link:packages/db
     devDependencies:
       next:
         specifier: ^16.3.6
