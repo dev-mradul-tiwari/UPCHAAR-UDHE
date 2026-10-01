@@ -21,3 +21,5 @@ coverage/
 
 .vercel
 .env*
+
+!packages/db/dist/
